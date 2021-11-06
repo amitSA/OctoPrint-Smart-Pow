@@ -1,3 +1,4 @@
-octoprint/
+octoprint
+.octoprint
 .vscode/
 *.log

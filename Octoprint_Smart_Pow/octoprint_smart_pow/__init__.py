@@ -1,80 +1,99 @@
-import octoprint_smart_pow.lib
-# # coding=utf-8
-# from __future__ import absolute_import
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
 
-# ### (Don't forget to remove me)
-# # This is a basic skeleton for your plugin's __init__.py. You probably want to adjust the class name of your plugin
-# # as well as the plugin mixins it's subclassing from. This is really just a basic skeleton to get you started,
-# # defining your plugin as a template plugin, settings and asset plugin. Feel free to add or remove mixins
-# # as necessary.
-# #
-# # Take a look at the documentation on what other plugin mixins are available.
+import octoprint.plugin
+from octoprint_smart_pow.lib.smart_plug_client import PowerState
+from octoprint_smart_pow.lib import events
+from octoprint_smart_pow.lib.power_state_publisher import PowerStatePublisher
+from octoprint_smart_pow.lib import discoverer
+from octoprint.events import EventManager
 
-# import octoprint.plugin
-
-# class Smart_powPlugin(octoprint.plugin.SettingsPlugin,
-#     octoprint.plugin.AssetPlugin,
-#     octoprint.plugin.TemplatePlugin
-# ):
-
-#     ##~~ SettingsPlugin mixin
-
-#     def get_settings_defaults(self):
-#         return {
-#             # put your plugin's default settings here
-#         }
-
-#     ##~~ AssetPlugin mixin
-
-#     def get_assets(self):
-#         # Define your plugin's asset files to automatically include in the
-#         # core UI here.
-#         return {
-#             "js": ["js/smart_pow.js"],
-#             "css": ["css/smart_pow.css"],
-#             "less": ["less/smart_pow.less"]
-#         }
-
-#     ##~~ Softwareupdate hook
-
-#     def get_update_information(self):
-#         # Define the configuration for your plugin to use with the Software Update
-#         # Plugin here. See https://docs.octoprint.org/en/master/bundledplugins/softwareupdate.html
-#         # for details.
-#         return {
-#             "smart_pow": {
-#                 "displayName": "Smart_pow Plugin",
-#                 "displayVersion": self._plugin_version,
-
-#                 # version check: github repository
-#                 "type": "github_release",
-#                 "user": "amitSA",
-#                 "repo": "Octoprint_Smart_Pow",
-#                 "current": self._plugin_version,
-
-#                 # update method: pip
-#                 "pip": "https://github.com/amitSA/Octoprint_Smart_Pow/archive/{target_version}.zip",
-#             }
-#         }
+class SmartPowPlugin(octoprint.plugin.StartupPlugin,
+                       octoprint.plugin.TemplatePlugin,
+                       octoprint.plugin.SettingsPlugin,
+                       octoprint.plugin.AssetPlugin):
 
 
-# # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
-# # ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
-# # can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
-# __plugin_name__ = "Smart_pow Plugin"
+    def on_after_startup(self):
+        self._logger.info("Starting up Smart Pow Plugin")
+        self._logger.info("Discovering TP-Link smart plug device in the home network")
+        # XXX Octoprint docs say to not perform long-running or blocking operations in this hook,
+        # yet this method can take up to 15 seconds to resolve.
+        # reference: https://docs.octoprint.org/en/master/plugins/mixins.html#octoprint.plugin.StartupPlugin.on_after_startup
+        tp_smart_plug = discoverer.find_tp_link_plug(alias=self.__smart_plug_alias_setting(), logger=self._logger)
+        self.event_manager : EventManager = self._event_bus
+        self.power_publisher = PowerStatePublisher(
+            event=events.POWER_STATE_CHANGED,
+            event_manager=self.event_manager,
+            smart_plug=tp_smart_plug)
 
-# # Starting with OctoPrint 1.4.0 OctoPrint will also support to run under Python 3 in addition to the deprecated
-# # Python 2. New plugins should make sure to run under both versions for now. Uncomment one of the following
-# # compatibility flags according to what Python versions your plugin supports!
-# #__plugin_pythoncompat__ = ">=2.7,<3" # only python 2
-# #__plugin_pythoncompat__ = ">=3,<4" # only python 3
-# #__plugin_pythoncompat__ = ">=2.7,<4" # python 2 and 3
+        self.power_publisher.start()
 
-# def __plugin_load__():
-#     global __plugin_implementation__
-#     __plugin_implementation__ = Smart_powPlugin()
+        self.event_manager.subscribe(event=events.POWER_STATE_CHANGED,callback=self.on_power_status_change)
 
-#     global __plugin_hooks__
-#     __plugin_hooks__ = {
-#         "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
-#     }
+
+    def get_settings_defaults(self):
+        """
+        Defines settings keys and their default values.
+        """
+        return {
+            "power_plug_state": False,
+            "tp_link_smart_plug_alias": "3d printer power plug"
+        }
+
+    def get_template_vars(self):
+        """
+        Injecting static values into templates
+
+        Implemented by TemplatePlugin
+        """
+        return dict(power_plug_state=self._settings.get(["power_plug_state"]))
+
+
+    def register_custom_events(self):
+        return [
+            events.POWER_STATE_CHANGED
+        ]
+
+    def on_power_status_change(self, event: str, payload: any):
+        self._logger.info(f"Received event {event}")
+        changed_state : PowerState = payload["power_state"]
+        if changed_state == PowerState.OFF:
+            self._settings.set(["power_plug_state"],"off")
+        else:
+            self._settings.set(["power_plug_state"],"on")
+
+    def get_template_configs(self):
+        """
+        Return a list of configurations for each template
+        Each configuration describes properties about the injection of the template.
+        """
+        return [
+            # "type" is the primary key, since by default each type uniquely maps to a specifically named template file
+            {"type":"navbar","custom_bindings":False},
+        ]
+
+    def __smart_plug_alias_setting(self):
+        """Return the alias of the tp-link smart_plug to connect to"""
+        return self._settings.get(["tp_link_smart_plug_alias"])
+
+    # def get_assets(self):
+    #     """
+    #     Used by the asset plugin to register custom view models.
+    #     """
+    #     return dict(
+    #     js=["js/helloworld.js"]
+    #     )
+
+plugin = SmartPowPlugin()
+
+global __plugin_implementation__
+__plugin_implementation__ = SmartPowPlugin()
+
+global __plugin_pythoncompat__
+__plugin_pythoncompat__ = ">=2.7,<4"
+
+global __plugin_hooks__
+__plugin_hooks__ = {
+    "octoprint.events.register_custom_events": plugin.register_custom_events
+}

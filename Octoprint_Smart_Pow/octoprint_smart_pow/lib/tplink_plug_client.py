@@ -11,7 +11,7 @@ class TPLinkClient(SmartPlugClient):
     """
     pass
 
-    def __init__(self, smart_plug):
+    def __init__(self, smart_plug: SmartPlug):
         self.plug = smart_plug
 
     def turn_on(self):

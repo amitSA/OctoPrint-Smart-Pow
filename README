@@ -25,6 +25,6 @@ This installs octoprint and it's deps
 
 Then cd back into project root, and then cd into the plugin directory `Octoprint_Smart_Pow`
 
-Then run `ocotoprint dev plugin:install` to install the plugin in developer mode, which means that the source-code of the install
+Then run `octoprint dev plugin:install` to install the plugin in developer mode, which means that the source-code of the install
 is the actual checked-in sourcecode, not some copied location
 > This means you can change source-code and then see your changes automatically apply without running any installation command

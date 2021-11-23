@@ -33,6 +33,10 @@ plugin_license = "AGPLv3"
 # Any additional requirements besides OctoPrint should be listed here
 plugin_requires = ["python-kasa"]
 
+dev_requires = ["pytest", "voluptuous"]
+# XXX Right now installing this plugin into octoprint also installs the dev_requires (development dependencies)
+#     Whats a good way to separate them ?
+plugin_requires += dev_requires
 ### --------------------------------------------------------------------------------------------------------------------
 ### More advanced options that you usually shouldn't have to touch follow after this point
 ### --------------------------------------------------------------------------------------------------------------------

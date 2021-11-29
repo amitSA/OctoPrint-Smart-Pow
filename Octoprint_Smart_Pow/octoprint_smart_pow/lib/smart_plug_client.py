@@ -1,9 +1,3 @@
-from enum import Enum, auto
-import enum
-
-class PowerState(Enum):
-  ON = auto()
-  OFF = auto()
 
 class SmartPlugClient():
   """

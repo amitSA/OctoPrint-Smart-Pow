@@ -18,7 +18,12 @@ My nix knowledge + setup.py knowledge limits here.  But that's okay! I have a nu
 This sets the python environment to the virtualenv.
 > Which means we can run `pip install` no matter where what the cwd is, and it will install them into this "environment"
 
-Run `cd octoprint/ && pip install -e .`
+<!-- Clone octoprint into the `3rd_party` directory via this \
+XXX \
+Then run  Run `cd third_party/octoprint/ && pip install -e .`
+> Octoprint Plugins depend on the octoprint CLI program for it's "dev" commands (see below). But this project also depends on source modules in Octoprint like the EventManager which is another reason why we need to clone octoprint -->
+Run `pip install octoprint`
+> But don't include octoprint as a setup.py dependency, that will automatically be added by Octoprint's helper install command (mentioned below)
 
 This installs octoprint and it's deps
 > I think the `-e .` incantation tells it to find octoprint's deps through it's setup.py.  But not sure

@@ -2,7 +2,11 @@
 from __future__ import absolute_import, unicode_literals
 
 import octoprint.plugin
-from octoprint_smart_pow.lib.smart_plug_client import PowerState
+from octoprint_smart_pow.lib.data.power_state_changed_event import (
+    PowerStateChangedEventPayload,
+    POWER_STATE_CHANGED_EVENT,
+    PowerState
+)
 from octoprint_smart_pow.lib import events
 from octoprint_smart_pow.lib.power_state_publisher import PowerStatePublisher
 from octoprint_smart_pow.lib import discoverer
@@ -23,13 +27,13 @@ class SmartPowPlugin(octoprint.plugin.StartupPlugin,
         tp_smart_plug = discoverer.find_tp_link_plug(alias=self.__smart_plug_alias_setting(), logger=self._logger)
         self.event_manager : EventManager = self._event_bus
         self.power_publisher = PowerStatePublisher(
-            event=events.POWER_STATE_CHANGED,
+            event=POWER_STATE_CHANGED_EVENT,
             event_manager=self.event_manager,
             smart_plug=tp_smart_plug)
 
         self.power_publisher.start()
 
-        self.event_manager.subscribe(event=events.POWER_STATE_CHANGED,callback=self.on_power_status_change)
+        self.event_manager.subscribe(event=POWER_STATE_CHANGED_EVENT,callback=self.on_power_status_change)
 
 
     def get_settings_defaults(self):
@@ -52,12 +56,12 @@ class SmartPowPlugin(octoprint.plugin.StartupPlugin,
 
     def register_custom_events(self):
         return [
-            events.POWER_STATE_CHANGED
+            POWER_STATE_CHANGED_EVENT
         ]
 
-    def on_power_status_change(self, event: str, payload: any):
+    def on_power_status_change(self, event: str, payload: PowerStateChangedEventPayload):
         self._logger.info(f"Received event {event}")
-        changed_state : PowerState = payload["power_state"]
+        changed_state : PowerState = payload.power_state
         if changed_state == PowerState.OFF:
             self._settings.set(["power_plug_state"],"off")
         else:

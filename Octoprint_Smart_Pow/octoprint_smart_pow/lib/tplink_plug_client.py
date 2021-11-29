@@ -1,7 +1,10 @@
 
 import asyncio
 from kasa import SmartPlug
-from octoprint_smart_pow.lib.smart_plug_client import SmartPlugClient,PowerState
+from octoprint_smart_pow.lib.smart_plug_client import SmartPlugClient
+from octoprint_smart_pow.lib.data.power_state_changed_event import (
+    PowerState
+)
 
 
 class TPLinkClient(SmartPlugClient):

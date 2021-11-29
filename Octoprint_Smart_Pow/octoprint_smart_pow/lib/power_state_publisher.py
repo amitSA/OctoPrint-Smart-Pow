@@ -1,7 +1,11 @@
 
 from datetime import timedelta
 from octoprint.events import EventManager
-from octoprint_smart_pow.lib.smart_plug_client import PowerState, SmartPlugClient
+from octoprint_smart_pow.lib.smart_plug_client import SmartPlugClient
+from octoprint_smart_pow.lib.data.power_state_changed_event import (
+    PowerStateChangedEventPayload,
+    PowerState
+)
 
 from octoprint_smart_pow.lib.interval_scheduler import IntervalScheduler
 
@@ -9,7 +13,7 @@ class PowerStatePublisher:
     """
     Listen to state change events for a a smart power plug, and broadcast them on the EventManager
     """
-    def __init__(self, event : str, event_manager : EventManager, smart_plug: SmartPlugClient):
+    def __init__(self, event: str, event_manager : EventManager, smart_plug: SmartPlugClient):
         self.event = event
         self.event_manager = event_manager
         self.smart_plug = smart_plug
@@ -46,6 +50,4 @@ class PowerStatePublisher:
             )
 
     def __create_payload(self, state: PowerState):
-        return {
-            "power_state": state
-        }
+        return PowerStateChangedEventPayload(power_state=state)

@@ -25,5 +25,5 @@ def backing_smart_device(fake_transport_protocol) -> SmartPlug:
     return plug
 
 @pytest.fixture
-def plug_client(backing_smart_device):
+def tplink_plug_client(backing_smart_device):
     return TPLinkClient(backing_smart_device)

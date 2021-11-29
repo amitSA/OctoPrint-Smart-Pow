@@ -13,9 +13,11 @@ from octoprint_smart_pow.lib import discoverer
 from octoprint.events import EventManager
 
 class SmartPowPlugin(octoprint.plugin.StartupPlugin,
-                       octoprint.plugin.TemplatePlugin,
-                       octoprint.plugin.SettingsPlugin,
-                       octoprint.plugin.AssetPlugin):
+                    octoprint.plugin.ShutdownPlugin,
+                    octoprint.plugin.TemplatePlugin,
+                    octoprint.plugin.SettingsPlugin,
+                    octoprint.plugin.AssetPlugin,
+                    octoprint.plugin.EventHandlerPlugin):
 
 
     def on_after_startup(self):
@@ -27,14 +29,12 @@ class SmartPowPlugin(octoprint.plugin.StartupPlugin,
         tp_smart_plug = discoverer.find_tp_link_plug(alias=self.__smart_plug_alias_setting(), logger=self._logger)
         self.event_manager : EventManager = self._event_bus
         self.power_publisher = PowerStatePublisher(
-            event=POWER_STATE_CHANGED_EVENT,
             event_manager=self.event_manager,
-            smart_plug=tp_smart_plug)
+            smart_plug=tp_smart_plug,
+            logger=self._logger
+        )
 
         self.power_publisher.start()
-
-        self.event_manager.subscribe(event=POWER_STATE_CHANGED_EVENT,callback=self.on_power_status_change)
-
 
     def get_settings_defaults(self):
         """
@@ -59,13 +59,14 @@ class SmartPowPlugin(octoprint.plugin.StartupPlugin,
             POWER_STATE_CHANGED_EVENT
         ]
 
-    def on_power_status_change(self, event: str, payload: PowerStateChangedEventPayload):
-        self._logger.info(f"Received event {event}")
-        changed_state : PowerState = payload.power_state
-        if changed_state == PowerState.OFF:
-            self._settings.set(["power_plug_state"],"off")
-        else:
-            self._settings.set(["power_plug_state"],"on")
+    def on_event(self, event: str, payload: PowerStateChangedEventPayload):
+        if event == POWER_STATE_CHANGED_EVENT:
+            self._logger.info(f"Received event {event}")
+            changed_state : PowerState = payload.power_state
+            if changed_state == PowerState.OFF:
+                self._settings.set(["power_plug_state"],"off")
+            else:
+                self._settings.set(["power_plug_state"],"on")
 
     def get_template_configs(self):
         """
@@ -80,6 +81,9 @@ class SmartPowPlugin(octoprint.plugin.StartupPlugin,
     def __smart_plug_alias_setting(self):
         """Return the alias of the tp-link smart_plug to connect to"""
         return self._settings.get(["tp_link_smart_plug_alias"])
+
+    def on_shutdown(self):
+        self.power_publisher.stop()
 
     # def get_assets(self):
     #     """

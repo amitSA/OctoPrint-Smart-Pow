@@ -25,18 +25,18 @@ class TestTPLinkPlugClient:
         is_on = backing_smart_device.is_on
         assert is_on is False
 
-    def test_read_power_state(self,plug_client):
+    def test_read_power_state(self,tplink_plug_client):
         """Test whether we can read the correct power state"""
-        assert plug_client.read() is PowerState.OFF
+        assert tplink_plug_client.read() is PowerState.OFF
 
-    def test_set_power_state(self,plug_client: TPLinkClient):
+    def test_set_power_state(self,tplink_plug_client: TPLinkClient):
         """Test whether we can set the power state"""
-        plug_client.turn_on()
-        assert plug_client.read() is PowerState.ON
+        tplink_plug_client.turn_on()
+        assert tplink_plug_client.read() is PowerState.ON
 
-    def test_read_power_state_after_external_change(self,plug_client, backing_smart_device: SmartPlug):
+    def test_read_power_state_after_external_change(self,tplink_plug_client, backing_smart_device: SmartPlug):
         """Test whether we read the correct power state after another system changes it"""
         # this simulates an external system changing the device's power state
         # (versus the client doing it)
         asyncio.run(backing_smart_device.turn_on())
-        assert plug_client.read() is PowerState.ON
+        assert tplink_plug_client.read() is PowerState.ON

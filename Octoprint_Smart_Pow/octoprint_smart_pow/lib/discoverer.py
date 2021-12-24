@@ -23,7 +23,7 @@ def find_tp_link_plug(alias,logger=logging) -> TPLinkClient:
         logger.info("No matched devices were found")
         raise NoDevicesFoundError()
 
-    return TPLinkClient(matched_devices[0])
+    return TPLinkClient(matched_devices[0],logger=logging)
 
 
 if __name__ == "__main__":

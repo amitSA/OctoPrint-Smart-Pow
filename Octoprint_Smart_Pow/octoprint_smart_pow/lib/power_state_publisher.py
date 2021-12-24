@@ -25,7 +25,9 @@ class PowerStatePublisher:
             action=self.__publish_if_changed,
             interval=timedelta(seconds=5)
         )
-        self.last_updated_state = self.smart_plug.read()
+        # XXX debug
+        # self.last_updated_state = self.smart_plug.read()
+        self.last_updated_state = None
 
     def start(self):
         """

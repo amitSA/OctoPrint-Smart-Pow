@@ -24,6 +24,7 @@ class IntervalScheduler:
         The core logic of the scheduler that also calls the scheduler's action.
 
         This is a blocking call, and thus should be called within a dedicated thread.
+        (Hence the scheduled action happens in the same thread where schedule.run() is caleld)
         """
         def action_wrapper():
             self.action()
@@ -32,7 +33,11 @@ class IntervalScheduler:
         if self.should_exit:
             return
 
-        self.scheduler.enter(delay=self.interval_seconds,priority=self.HIGH_PRIORITY,action=action_wrapper)
+        self.scheduler.enter(
+            delay=self.interval_seconds,
+            priority=self.HIGH_PRIORITY,
+            action=action_wrapper
+        )
         # Runs all scheduled events, and blocks untill completion
         self.scheduler.run()
 

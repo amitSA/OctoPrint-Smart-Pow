@@ -2,7 +2,7 @@ import time
 from datetime import datetime,timedelta
 import funcy
 
-def wait_untill(condition, poll_period: timedelta, timeout: timedelta, condition_name="no_name",time=time.time,sleep=time.sleep,*condition_args,**condition_kwargs):
+def wait_untill(condition, poll_period=timedelta(seconds=1), timeout=timedelta(seconds=10), condition_name="no_name",time=time.time,sleep=time.sleep,*condition_args,**condition_kwargs):
     """
     Waits untill the following condition function returns true
 

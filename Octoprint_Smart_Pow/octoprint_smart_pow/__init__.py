@@ -5,33 +5,38 @@ import octoprint.plugin
 from octoprint_smart_pow.lib.data.power_state_changed_event import (
     PowerStateChangedEventPayload,
     POWER_STATE_CHANGED_EVENT,
-    PowerState
+    PowerState,
 )
 from octoprint_smart_pow.lib import events
 from octoprint_smart_pow.lib.power_state_publisher import PowerStatePublisher
 from octoprint_smart_pow.lib import discoverer
 from octoprint.events import EventManager
 
-class SmartPowPlugin(octoprint.plugin.StartupPlugin,
-                    octoprint.plugin.ShutdownPlugin,
-                    octoprint.plugin.TemplatePlugin,
-                    octoprint.plugin.SettingsPlugin,
-                    octoprint.plugin.AssetPlugin,
-                    octoprint.plugin.EventHandlerPlugin):
 
-
+class SmartPowPlugin(
+    octoprint.plugin.StartupPlugin,
+    octoprint.plugin.ShutdownPlugin,
+    octoprint.plugin.TemplatePlugin,
+    octoprint.plugin.SettingsPlugin,
+    octoprint.plugin.AssetPlugin,
+    octoprint.plugin.EventHandlerPlugin,
+):
     def on_after_startup(self):
         self._logger.info("Starting up Smart Pow Plugin")
-        self._logger.info("Discovering TP-Link smart plug device in the home network")
+        self._logger.info(
+            "Discovering TP-Link smart plug device in the home network"
+        )
         # XXX Octoprint docs say to not perform long-running or blocking operations in this hook,
         # yet this method can take up to 15 seconds to resolve.
         # reference: https://docs.octoprint.org/en/master/plugins/mixins.html#octoprint.plugin.StartupPlugin.on_after_startup
-        tp_smart_plug = discoverer.find_tp_link_plug(alias=self.__smart_plug_alias_setting(), logger=self._logger)
-        self.event_manager : EventManager = self._event_bus
+        tp_smart_plug = discoverer.find_tp_link_plug(
+            alias=self.__smart_plug_alias_setting(), logger=self._logger
+        )
+        self.event_manager: EventManager = self._event_bus
         self.power_publisher = PowerStatePublisher(
             event_manager=self.event_manager,
             smart_plug=tp_smart_plug,
-            logger=self._logger
+            logger=self._logger,
         )
 
         self.power_publisher.start()
@@ -42,7 +47,7 @@ class SmartPowPlugin(octoprint.plugin.StartupPlugin,
         """
         return {
             "power_plug_state": False,
-            "tp_link_smart_plug_alias": "3d printer power plug"
+            "tp_link_smart_plug_alias": "3d printer power plug",
         }
 
     def get_template_vars(self):
@@ -53,20 +58,17 @@ class SmartPowPlugin(octoprint.plugin.StartupPlugin,
         """
         return dict(power_plug_state=self._settings.get(["power_plug_state"]))
 
-
     def register_custom_events(self):
-        return [
-            POWER_STATE_CHANGED_EVENT
-        ]
+        return [POWER_STATE_CHANGED_EVENT]
 
     def on_event(self, event: str, payload: PowerStateChangedEventPayload):
         if event == POWER_STATE_CHANGED_EVENT:
             self._logger.info(f"Received event {event}")
-            changed_state : PowerState = payload.power_state
+            changed_state: PowerState = payload.power_state
             if changed_state == PowerState.OFF:
-                self._settings.set(["power_plug_state"],"off")
+                self._settings.set(["power_plug_state"], "off")
             else:
-                self._settings.set(["power_plug_state"],"on")
+                self._settings.set(["power_plug_state"], "on")
 
     def get_template_configs(self):
         """
@@ -75,7 +77,7 @@ class SmartPowPlugin(octoprint.plugin.StartupPlugin,
         """
         return [
             # "type" is the primary key, since by default each type uniquely maps to a specifically named template file
-            {"type":"navbar","custom_bindings":False},
+            {"type": "navbar", "custom_bindings": False},
         ]
 
     def __smart_plug_alias_setting(self):
@@ -92,6 +94,7 @@ class SmartPowPlugin(octoprint.plugin.StartupPlugin,
     #     return dict(
     #     js=["js/helloworld.js"]
     #     )
+
 
 plugin = SmartPowPlugin()
 

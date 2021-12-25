@@ -1,4 +1,3 @@
-
 # XXX Rename this to "interval_scheduler.py" and delete the old file after this is confirmed to work for both async and regula routines
 # XXX Rename this class to represent running the same routine to run in an interval
 from datetime import timedelta
@@ -10,11 +9,14 @@ import time
 import logging
 import asyncio
 
+
 class AsyncIntervalScheduler:
     """
     Runs a routine at an interval out of the calling thread
     """
+
     HIGH_PRIORITY = 0
+
     def __init__(self, routine: Callable, interval: timedelta, logger=logging):
         self.routine = routine
         self.interval_seconds = interval.total_seconds()
@@ -40,7 +42,6 @@ class AsyncIntervalScheduler:
         self._has_finished = True
         self.logger.info("Scheduler exited succesfully!")
 
-
     def start(self):
         self.t_helper.start()
 
@@ -50,8 +51,11 @@ class AsyncIntervalScheduler:
     def has_finished(self):
         return self._has_finished
 
+
 # I used this as a manual test since it was quicker than writing unit-tests. HarHarHar
 if __name__ == "__main__":
     squak = lambda: print("Caaw!")
-    scheduler = AsyncIntervalScheduler(routine=squak,interval=timedelta(seconds=1))
+    scheduler = AsyncIntervalScheduler(
+        routine=squak, interval=timedelta(seconds=1)
+    )
     scheduler.start()

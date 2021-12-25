@@ -22,6 +22,7 @@ This sets the python environment to the virtualenv.
 XXX \
 Then run  Run `cd third_party/octoprint/ && pip install -e .`
 > Octoprint Plugins depend on the octoprint CLI program for it's "dev" commands (see below). But this project also depends on source modules in Octoprint like the EventManager which is another reason why we need to clone octoprint -->
+# XXX where is the "-e ." mentioned here ? I think these docs need to be changed
 Run `pip install octoprint`
 > But don't include octoprint as a setup.py dependency, that will automatically be added by Octoprint's helper install command (mentioned below)
 

@@ -19,14 +19,21 @@ class TPLinkClient(SmartPlugClient):
         self.plug = smart_plug
         self.logger = logger
 
-    def turn_on(self):
-        asyncio.run(self.plug.turn_on())
+    # def turn_on(self):
+    #     asyncio.run(self.plug.turn_on())
 
-    def turn_off(self):
-        asyncio.run(self.plug.turn_off())
+    # def turn_off(self):
+    #     asyncio.run(self.plug.turn_off())
 
-    def read(self) -> PowerState:
-        self._refresh()
+    # def read(self) -> PowerState:
+    #     self._refresh()
+    #     return PowerState.ON if self.plug.is_on else PowerState.OFF
+
+    async def async_read(self) -> PowerState:
+        """
+        Asynchronously read the current power state
+        """
+        await self.plug.update()
         return PowerState.ON if self.plug.is_on else PowerState.OFF
 
     def _refresh(self):

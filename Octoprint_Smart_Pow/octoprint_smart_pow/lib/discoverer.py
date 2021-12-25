@@ -20,9 +20,9 @@ def find_tp_link_plug(alias,logger=logging) -> TPLinkClient:
         return device.alias == alias
     matched_devices = lfilter(matches_alias, devices.values())
     if len(matched_devices) == 0:
-        logger.info("No matched devices were found")
+        logger.warning("No matched devices were found.  Retrying...")
         raise NoDevicesFoundError()
-
+    logger.info("Found TPLink device")
     return TPLinkClient(matched_devices[0],logger=logging)
 
 

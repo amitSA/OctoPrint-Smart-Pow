@@ -24,7 +24,7 @@ class IntervalScheduler:
         The core logic of the scheduler that also calls the scheduler's action.
 
         This is a blocking call, and thus should be called within a dedicated thread.
-        (Hence the scheduled action happens in the same thread where schedule.run() is caleld)
+        (Hence the scheduled action happens in the same thread where schedule.run() is called)
         """
         def action_wrapper():
             self.action()

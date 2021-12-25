@@ -37,7 +37,8 @@ class TestPowerStatePublisher:
         yield
         change_publisher.stop()
 
-    def test_publish_power_state_changed_events_from_off_on_off_on(self,
+    @pytest.mark.asyncio
+    async def test_publish_power_state_changed_events_from_off_on_off_on(self,
         event_manager : octoprint.events.EventManager,
         tplink_plug_client: TPLinkClient,
         backing_smart_device: SmartPlug,
@@ -47,7 +48,7 @@ class TestPowerStatePublisher:
         when the power state is changed
         """
         # double check initial state is off for making sure we're starting off at a known state
-        assert tplink_plug_client.read() == PowerState.OFF
+        await tplink_plug_client.async_read() == PowerState.OFF
 
         # XXX can I pass in a spec to describe that subscriber takes in an (event,payload) arg signature ?
         #  And as an extra safe-guard if for some reason extra arguments are passed into the function ?
@@ -59,10 +60,10 @@ class TestPowerStatePublisher:
 
         event_manager.subscribe(event=POWER_STATE_CHANGED_EVENT,callback=subscriber)
         # Simulate an external device turn-on
-        asyncio.run(backing_smart_device.turn_on())
+        await backing_smart_device.turn_on()
         # Wait for the subscriber to be called
         wait_untill(condition=create_condition(ON_PAYLOAD),poll_period=timedelta(seconds=1),timeout=timedelta(seconds=10),condition_name="Power is On")
 
         # Simulate an external device turn-off
-        asyncio.run(backing_smart_device.turn_off())
+        await backing_smart_device.turn_off()
         wait_untill(condition=create_condition(OFF_PAYLOAD),poll_period=timedelta(seconds=1),timeout=timedelta(seconds=10),condition_name="Power is Off")

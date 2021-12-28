@@ -1,4 +1,8 @@
-<div class="input-append">
-    <input type="text" class="input-xxlarge" data-bind="value: newUrl">
-    <label data-bind="value: settings.settings.plugins.smartpow.power_plug_state">On</label>
-</div>
+    {# <input type="text" class="input-xxlarge" data-bind="value: newUrl"> #}
+    {# <button class="btn btn-primary" data-bind="click: goToUrl">{{ _('Go') }}</button> #}
+{# This id doesn't matter, it's created and inserted invisibly by octoprint behind the scenes #}
+<span class="label">Power Sate is: </span>
+<span class="label" data-bind="text: power_state"></span>
+{# <input type="text" class="input-xxlarge" data-bind="value: settings.settings.plugins.smart_pow.power_plug_state"> #}
+
+{# <iframe data-bind="attr: {src: currentUrl}" style="width: 100%; height: 600px; border: 1px solid #808080"></iframe> #}

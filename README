@@ -22,7 +22,7 @@ This sets the python environment to the virtualenv.
 XXX \
 Then run  Run `cd third_party/octoprint/ && pip install -e .`
 > Octoprint Plugins depend on the octoprint CLI program for it's "dev" commands (see below). But this project also depends on source modules in Octoprint like the EventManager which is another reason why we need to clone octoprint -->
-# XXX where is the "-e ." mentioned here ? I think these docs need to be changed
+**XXX where is the "-e ." mentioned here ? I think these docs need to be changed**
 Run `pip install octoprint`
 > But don't include octoprint as a setup.py dependency, that will automatically be added by Octoprint's helper install command (mentioned below)
 
@@ -34,3 +34,9 @@ Then cd back into project root, and then cd into the plugin directory `Octoprint
 Then run `octoprint dev plugin:install` to install the plugin in developer mode, which means that the source-code of the install
 is the actual checked-in sourcecode, not some copied location
 > This means you can change source-code and then see your changes automatically apply without running any installation command
+
+
+### Common Errors
+
+**User permission error when installing `pip install octoprint`**
+Likely because you're not installing it in virtual env, and instead are trying to install it in the nix installation, which is read-only

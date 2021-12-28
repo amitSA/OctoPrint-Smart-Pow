@@ -51,7 +51,7 @@ class TestPowerStatePublisher:
         when the power state is changed
         """
         # double check initial state is off for making sure we're starting off at a known state
-        await tplink_plug_client.async_read() == PowerState.OFF
+        await tplink_plug_client.read() == PowerState.OFF
 
         # XXX can I pass in a spec to describe that subscriber takes in an (event,payload) arg signature ?
         #  And as an extra safe-guard if for some reason extra arguments are passed into the function ?

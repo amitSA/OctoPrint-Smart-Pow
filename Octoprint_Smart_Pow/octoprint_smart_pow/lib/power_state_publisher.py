@@ -34,7 +34,7 @@ class PowerStatePublisher:
 
         # An object that will call a routine on an interval
         self.interval_scheduler = AsyncIntervalScheduler(
-            action=self.__publish_if_changed, interval=timedelta(seconds=5)
+            routine=self.__publish_if_changed, interval=timedelta(seconds=5)
         )
         self.last_updated_state = None
 
@@ -61,12 +61,12 @@ class PowerStatePublisher:
         attempt = 1
         while True:
             try:
-                return await self.smart_plug.async_read()
+                return await self.smart_plug.read()
             except kasa.exceptions.SmartDeviceException as err:
                 if attempt == retry_attempts:
                     raise
                 self.logger.warning(
-                    "Error when reading Smart Plug state, retrying after backoff..."
+                    "Error when reading Smart Plug state, retry attempt %d/%d after backoff...", attempt, retry_attempts
                 )
                 await asyncio.sleep(backoff_seconds)
             finally:

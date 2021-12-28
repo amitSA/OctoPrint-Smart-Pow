@@ -12,6 +12,18 @@ from octoprint_smart_pow.lib.power_state_publisher import PowerStatePublisher
 from octoprint_smart_pow.lib import discoverer
 from octoprint.events import EventManager
 
+import octoprint.plugin
+import flask
+
+from octoprint_smart_pow.lib.mappers.power_state import (
+    power_state_to_api_repr,
+    api_power_state_to_internal_repr
+)
+from octoprint_smart_pow.lib.data.power_state_api import (
+    API_POWER_STATE_KEY,
+    API_POWER_STATE_SET_COMMAND,
+    APIPowerState
+)
 
 class SmartPowPlugin(
     octoprint.plugin.StartupPlugin,
@@ -20,6 +32,7 @@ class SmartPowPlugin(
     octoprint.plugin.SettingsPlugin,
     octoprint.plugin.AssetPlugin,
     octoprint.plugin.EventHandlerPlugin,
+    octoprint.plugin.SimpleApiPlugin,
 ):
     def on_after_startup(self):
         self._logger.info("Starting up Smart Pow Plugin")
@@ -38,25 +51,25 @@ class SmartPowPlugin(
             smart_plug=tp_smart_plug,
             logger=self._logger,
         )
-
         self.power_publisher.start()
+
+        self.power_state : PowerState = None
 
     def get_settings_defaults(self):
         """
         Defines settings keys and their default values.
         """
         return {
-            "power_plug_state": False,
             "tp_link_smart_plug_alias": "3d printer power plug",
         }
 
-    def get_template_vars(self):
-        """
-        Injecting static values into templates
+    # def get_template_vars(self):
+    #     """
+    #     Injecting static values into templates
 
-        Implemented by TemplatePlugin
-        """
-        return dict(power_plug_state=self._settings.get(["power_plug_state"]))
+    #     Implemented by TemplatePlugin
+    #     """
+    #     return dict(power_plug_state=self._settings.get(["power_plug_state"]))
 
     def register_custom_events(self):
         return [POWER_STATE_CHANGED_EVENT]
@@ -65,10 +78,8 @@ class SmartPowPlugin(
         if event == POWER_STATE_CHANGED_EVENT:
             self._logger.info(f"Received event {event}")
             changed_state: PowerState = payload.power_state
-            if changed_state == PowerState.OFF:
-                self._settings.set(["power_plug_state"], "off")
-            else:
-                self._settings.set(["power_plug_state"], "on")
+            self.power_state = changed_state
+            # self._settings.save() # Older code for saving to yaml.  Can remove
 
     def get_template_configs(self):
         """
@@ -77,7 +88,7 @@ class SmartPowPlugin(
         """
         return [
             # "type" is the primary key, since by default each type uniquely maps to a specifically named template file
-            {"type": "navbar", "custom_bindings": False},
+            {"type": "tab", "custom_bindings": True},
         ]
 
     def __smart_plug_alias_setting(self):
@@ -87,14 +98,45 @@ class SmartPowPlugin(
     def on_shutdown(self):
         self.power_publisher.stop()
 
-    # def get_assets(self):
-    #     """
-    #     Used by the asset plugin to register custom view models.
-    #     """
-    #     return dict(
-    #     js=["js/helloworld.js"]
-    #     )
+    def get_assets(self):
+        """
+        Used by the asset plugin to register custom view models.
+        """
+        return dict(
+            js=["js/smart_pow.js"]
+        )
 
+    # Simple API Plugin Hooks
+
+    def get_api_commands(self):
+        self._logger.info("GETTING API COMMANDS")
+        return {
+            # the value is the list of all property names this command takes
+            API_POWER_STATE_SET_COMMAND:[API_POWER_STATE_KEY]
+        }
+
+    def on_api_command(self, command, data):
+        """
+        Defining POST route
+        """
+        import flask # DO I NEED THIS ?
+        if command == API_POWER_STATE_SET_COMMAND:
+            state = data[API_POWER_STATE_KEY]
+            power_state : PowerState = api_power_state_to_internal_repr(state)
+            # TODO set external power_state to desired value
+        else:
+            raise ValueError(f"command {command} is un recognized")
+
+    def on_api_get(self, request):
+        """
+        Defining GET route
+
+        Return all relevant data structures since there can only be one GET
+        implemented by the SimpleAPIPlugin
+        """
+        self._logger.info("IN GET API")
+        api_power_state = power_state_to_api_repr(self.power_state)
+        return flask.jsonify(API_POWER_STATE_KEY=api_power_state)
 
 plugin = SmartPowPlugin()
 

@@ -13,14 +13,33 @@ class TPLinkClient(SmartPlugClient):
 
     pass
 
-    def __init__(self, smart_plug: SmartPlug, logger=logging):
-        self.plug = smart_plug
+    def __init__(self, smart_plug: SmartPlug=None, host:str=None, logger=logging):
+        """
+        Create a plug client either from a kasa SmartPlug object or the host ip
+        """
+        # If initialized via host, the docs say we need to update() the plug first
+        self.needs_initial_async_update = False
+        if smart_plug is not None:
+            self.plug = smart_plug
+        else:
+            if host is None:
+                raise ValueError("Host needs to be non-None if smart_plug is None")
+            self.plug = SmartPlug(host=host)
+            self.needs_initial_async_update = True
         self.logger = logger
 
     async def turn_on(self):
+        if self.needs_initial_async_update:
+            await self.plug.update()
+            self.needs_initial_async_update = False
+
         await self.plug.turn_on()
 
     async def turn_off(self):
+        if self.needs_initial_async_update:
+            await self.plug.update()
+            self.needs_initial_async_update = False
+
         await self.plug.turn_off()
 
     async def read(self) -> PowerState:

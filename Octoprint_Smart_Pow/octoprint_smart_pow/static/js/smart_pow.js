@@ -3,7 +3,7 @@ $(function() {
         var self = this;
 
         self.settings = parameters[0];
-        self.power_state = "unknown"
+        self.power_state = ko.observable('')
         // console.log("HARRY POTTER IS BACK")
         // console.log(self.settings)
 
@@ -21,14 +21,39 @@ $(function() {
 
         self.get_power_state = function() {
             console.log("Querying API for power state")
-            OctoPrint.simpleApiGet("simple_pow")
+            OctoPrint.simpleApiGet("smart_pow")
             .then(function (data) {
+                // make this data key a constant
                 power_state = data["power_state"]
                 self.power_state(power_state)
             }).fail(function (err) {
                 console.log(err)
             })
 
+        }
+
+        self.turn_on = function() {
+            OctoPrint.simpleApiCommand("smart_pow","set_power_state",{
+                power_state: "on"
+            })
+            .then(function (data) {
+                // power_state = data["power_state"]
+                // self.power_state(power_state)
+            }).fail(function (err) {
+                console.log(err)
+            })
+        }
+
+        self.turn_off = function() {
+            OctoPrint.simpleApiCommand("smart_pow","set_power_state",{
+                power_state: "off"
+            })
+            .then(function (data) {
+                // power_state = data["power_state"]
+                // self.power_state(power_state)
+            }).fail(function (err) {
+                console.log(err)
+            })
         }
         // This will get called before the HelloWorldViewModel gets bound to the DOM, but after its
         // dependencies have already been initialized. It is especially guaranteed that this method

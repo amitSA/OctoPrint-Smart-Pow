@@ -1,6 +1,7 @@
 import asyncio
 from datetime import timedelta
 from octoprint.events import EventManager
+from octoprint_smart_pow.lib.power_state_helpers import fire_power_state_changed_event
 from octoprint_smart_pow.lib.smart_plug_client import SmartPlugClient
 from octoprint_smart_pow.lib.data.power_state_changed_event import (
     PowerStateChangedEventPayload,
@@ -17,6 +18,7 @@ from octoprint_smart_pow.lib.async_interval_scheduler import (
 
 class PowerStatePublisher:
     MAX_CONNECTION_FAILED_RETRY_ATTEMPTS = 20
+    POLL_INTERVAL_FOR_READ=timedelta(seconds=2)
 
     """
     Listen to state change events for a a smart power plug, and broadcast them on the EventManager
@@ -34,7 +36,7 @@ class PowerStatePublisher:
 
         # An object that will call a routine on an interval
         self.interval_scheduler = AsyncIntervalScheduler(
-            routine=self.__publish_if_changed, interval=timedelta(seconds=5)
+            routine=self.__publish_if_changed, interval=self.POLL_INTERVAL_FOR_READ
         )
         self.last_updated_state = None
 
@@ -88,11 +90,5 @@ class PowerStatePublisher:
                 self.last_updated_state,
                 current_state,
             )
-            self.event_manager.fire(
-                event=POWER_STATE_CHANGED_EVENT,
-                payload=self.__create_payload(current_state),
-            )
+            fire_power_state_changed_event(self.event_manager,current_state)
             self.last_updated_state = current_state
-
-    def __create_payload(self, state: PowerState):
-        return PowerStateChangedEventPayload(power_state=state)

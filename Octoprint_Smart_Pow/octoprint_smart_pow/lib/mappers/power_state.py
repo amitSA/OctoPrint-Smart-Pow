@@ -1,7 +1,7 @@
 
 import funcy
 from octoprint_smart_pow.lib.data.power_state_api import APIPowerState
-from octoprint_smart_pow.lib.data.power_state_changed_event import PowerState
+from octoprint_smart_pow.lib.data.power_state_changed_event import PowerState, PowerStateChangedEventPayload
 
 class UnsupportedState(Exception):
     pass
@@ -10,6 +10,7 @@ class UnsupportedState(Exception):
 api_to_internal_mapping = {
     PowerState.OFF: APIPowerState.OFF,
     PowerState.ON: APIPowerState.ON,
+    PowerState.UNKNOWN: APIPowerState.UNKNOWN,
 }
 # TODO: I question the use of the data type APIPowerState.  Maybe I should just use "PowerState" as the data contract for the API
 # and that would simplify a lot of code
@@ -27,3 +28,6 @@ def api_power_state_to_internal_repr(api_state: APIPowerState) -> PowerState:
         return internal_to_api_mapping[api_state]
     except KeyError as e:
         raise UnsupportedState(f"api power state {api_state} not recognized") from e
+
+def power_state_to_event_payload(state: PowerState):
+    return PowerStateChangedEventPayload(power_state=state)

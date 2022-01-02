@@ -4,3 +4,4 @@ API_POWER_STATE_SET_COMMAND = "set_power_state"
 class APIPowerState(Enum):
     ON = "on"
     OFF = "off"
+    UNKNOWN = "unknown"

@@ -5,7 +5,7 @@ from kasa import SmartPlug
 from kasa.tests.newfakes import FakeTransportProtocol
 import logging
 import asyncio
-from octoprint_smart_pow.lib.data.power_state_changed_event import PowerState
+from octoprint_smart_pow.lib.data.power_state import PowerState
 from octoprint_smart_pow.lib.tplink_plug_client import TPLinkClient
 
 @pytest.mark.asyncio

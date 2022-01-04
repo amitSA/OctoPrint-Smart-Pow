@@ -4,6 +4,9 @@ $(function() {
 
         self.settings = parameters[0];
         self.power_state = ko.observable('')
+        self.is_conditional_power_off_enabled = ko.observable('')
+        // TODO declare constants and keys at the top
+
         // console.log("HARRY POTTER IS BACK")
         // console.log(self.settings)
 
@@ -34,7 +37,7 @@ $(function() {
 
         self.turn_on = function() {
             OctoPrint.simpleApiCommand("smart_pow","set_power_state",{
-                power_state: "on"
+                power_state: "On"
             })
             .then(function (data) {
                 // power_state = data["power_state"]
@@ -46,7 +49,7 @@ $(function() {
 
         self.turn_off = function() {
             OctoPrint.simpleApiCommand("smart_pow","set_power_state",{
-                power_state: "off"
+                power_state: "Off"
             })
             .then(function (data) {
                 // power_state = data["power_state"]
@@ -60,9 +63,16 @@ $(function() {
         // gets called _after_ the settings have been retrieved from the OctoPrint backend and thus
         // the SettingsViewModel been properly populated.
         self.onBeforeBinding = function() {
-            // self.newUrl(self.settings.settings.plugins.helloworld.url());
-            // self.goToUrl();
-            setInterval(self.get_power_state,1000)
+            self.get_power_state()
+        }
+
+        self.onEventplugin_smart_pow_power_changed_event = function(payload) {
+            // console.log(payload)
+            self.power_state(payload["power_state"])
+        }
+        self.onEventplugin_smart_pow_conditional_power_off_enabled_event = function(payload) {
+            // TODO value-check the payload. It should be a boolean type
+            self.is_conditional_power_off_enabled(payload)
         }
     }
 

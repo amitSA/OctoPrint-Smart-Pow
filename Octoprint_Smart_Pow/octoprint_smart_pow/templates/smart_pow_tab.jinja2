@@ -6,6 +6,10 @@
 {# does this need paranthesis? #}
 <button type="button" class="btn btn-primary" data-bind="click: turn_on">Turn on</button>
 <button type="button" class="btn btn-warning" data-bind="click: turn_off">Turn off</button>
+<br/>
+<span class="label">Conditional Power Off is: </span>
+<span class="label" data-bind="text: is_conditional_power_off_enabled"></span>
+
 {# <input type="text" class="input-xxlarge" data-bind="value: settings.settings.plugins.smart_pow.power_plug_state"> #}
 
 {# <iframe data-bind="attr: {src: currentUrl}" style="width: 100%; height: 600px; border: 1px solid #808080"></iframe> #}

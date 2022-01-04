@@ -1,12 +1,13 @@
+from octoprint_smart_pow.lib.data.events import Events
 from octoprint_smart_pow.lib.power_state_publisher import PowerStatePublisher
 import pytest
 import asyncio
 import octoprint.events
 import octoprint.plugin
-from octoprint_smart_pow.lib.data.power_state_changed_event import (
+from octoprint_smart_pow.lib.data.power_state import (
+    API_POWER_STATE_KEY,
+    APIPowerState,
     PowerState,
-    POWER_STATE_CHANGED_EVENT,
-    PowerStateChangedEventPayload,
 )
 
 from kasa import SmartPlug
@@ -16,8 +17,18 @@ import time
 from octoprint_smart_pow.lib.clock_utils import wait_untill
 
 
-OFF_PAYLOAD = PowerStateChangedEventPayload(power_state=PowerState.OFF)
-ON_PAYLOAD = PowerStateChangedEventPayload(power_state=PowerState.ON)
+# TODO this code is duplicate with test_power_state.  Consolidate the two fixtures
+@pytest.fixture
+def api_power_state_off():
+    return {
+            API_POWER_STATE_KEY: "Off"
+    }
+
+@pytest.fixture
+def api_power_state_on():
+    return {
+            API_POWER_STATE_KEY: "On"
+    }
 
 # XXX tag this test as a "long_test" since it takes more than 1 second to complete.
 class TestPowerStatePublisher:
@@ -30,13 +41,13 @@ class TestPowerStatePublisher:
         event_manager.fire(octoprint.events.Events.SHUTDOWN)
 
     @pytest.fixture(autouse=True)
-    def power_state_change_publisher(
+    def publisher(
         self, event_manager, tplink_plug_client: TPLinkClient
     ):
-        change_publisher = PowerStatePublisher(event_manager, tplink_plug_client)
-        change_publisher.start()
-        yield
-        change_publisher.stop()
+        publisher = PowerStatePublisher(event_manager, tplink_plug_client)
+        publisher.start()
+        yield publisher
+        publisher.stop()
 
     @pytest.mark.asyncio
     async def test_publish_power_state_changed_events_from_off_on_off_on(
@@ -44,6 +55,8 @@ class TestPowerStatePublisher:
         event_manager: octoprint.events.EventManager,
         tplink_plug_client: TPLinkClient,
         backing_smart_device: SmartPlug,
+        api_power_state_off,
+        api_power_state_on,
         mocker,
     ):
         """
@@ -57,22 +70,23 @@ class TestPowerStatePublisher:
         #  And as an extra safe-guard if for some reason extra arguments are passed into the function ?
         subscriber = mocker.Mock()
 
-        def create_condition(expected_payload: PowerStateChangedEventPayload):
+        def create_condition(expected_payload: APIPowerState):
             def condition():
                 return subscriber.call_args == mocker.call(
-                    POWER_STATE_CHANGED_EVENT, expected_payload
+                    Events.POWER_STATE_CHANGED_EVENT_NAME(), expected_payload
                 )
 
             return condition
 
         event_manager.subscribe(
-            event=POWER_STATE_CHANGED_EVENT, callback=subscriber
+            event=Events.POWER_STATE_CHANGED_EVENT_NAME(),
+            callback=subscriber
         )
         # Simulate an external device turn-on
         await backing_smart_device.turn_on()
         # Wait for the subscriber to be called
         wait_untill(
-            condition=create_condition(ON_PAYLOAD),
+            condition=create_condition(api_power_state_on),
             poll_period=timedelta(seconds=1),
             timeout=timedelta(seconds=10),
             condition_name="Power is On",
@@ -81,7 +95,7 @@ class TestPowerStatePublisher:
         # Simulate an external device turn-off
         await backing_smart_device.turn_off()
         wait_untill(
-            condition=create_condition(OFF_PAYLOAD),
+            condition=create_condition(api_power_state_off),
             poll_period=timedelta(seconds=1),
             timeout=timedelta(seconds=10),
             condition_name="Power is Off",

@@ -1,12 +1,10 @@
 import asyncio
 from datetime import timedelta
 from octoprint.events import EventManager
-from octoprint_smart_pow.lib.power_state_helpers import fire_power_state_changed_event
+from octoprint_smart_pow.lib.event_manager_helpers import fire_power_state_changed_event
 from octoprint_smart_pow.lib.smart_plug_client import SmartPlugClient
-from octoprint_smart_pow.lib.data.power_state_changed_event import (
-    PowerStateChangedEventPayload,
+from octoprint_smart_pow.lib.data.power_state import (
     PowerState,
-    POWER_STATE_CHANGED_EVENT,
 )
 import logging
 import kasa
@@ -86,7 +84,7 @@ class PowerStatePublisher:
             or self.last_updated_state is None
         ):
             self.logger.info(
-                "Power state changed from %s to %s",
+                "Publisher registered power state changed from %s to %s",
                 self.last_updated_state,
                 current_state,
             )

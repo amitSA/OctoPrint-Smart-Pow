@@ -4,8 +4,8 @@ from octoprint_smart_pow.lib.smart_plug_client import SmartPlugClient
 from octoprint_smart_pow.lib.data.power_state import PowerState
 import logging
 
-
-class TPLinkClient(SmartPlugClient):
+# TODO: rename this file to tplink_plug to resemble the new name
+class TPLinkPlug(SmartPlugClient):
     """
     Interface for a TPLink smart power plug.
     Implements the "PowerPlugClientInterface"
@@ -13,7 +13,9 @@ class TPLinkClient(SmartPlugClient):
 
     pass
 
-    def __init__(self, smart_plug: SmartPlug=None, host:str=None, logger=logging):
+    def __init__(
+        self, smart_plug: SmartPlug = None, host: str = None, logger=logging
+    ):
         """
         Create a plug client either from a kasa SmartPlug object or the host ip
         """
@@ -23,7 +25,9 @@ class TPLinkClient(SmartPlugClient):
             self.plug = smart_plug
         else:
             if host is None:
-                raise ValueError("Host needs to be non-None if smart_plug is None")
+                raise ValueError(
+                    "Host needs to be non-None if smart_plug is None"
+                )
             self.plug = SmartPlug(host=host)
             self.needs_initial_async_update = True
         self.logger = logger

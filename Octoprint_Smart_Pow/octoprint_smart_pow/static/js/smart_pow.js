@@ -66,8 +66,7 @@ $(function() {
             self.get_power_state()
         }
 
-        self.onEventplugin_smart_pow_power_changed_event = function(payload) {
-            // console.log(payload)
+        self.onEventplugin_smart_pow_power_state_changed_event = function(payload) {
             self.power_state(payload["power_state"])
         }
         self.onEventplugin_smart_pow_conditional_power_off_enabled_event = function(payload) {

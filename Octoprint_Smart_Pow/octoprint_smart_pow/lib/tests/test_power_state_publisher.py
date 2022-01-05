@@ -11,39 +11,21 @@ from octoprint_smart_pow.lib.data.power_state import (
 )
 
 from kasa import SmartPlug
-from octoprint_smart_pow.lib.tplink_plug_client import TPLinkClient
+from octoprint_smart_pow.lib.tplink_plug_client import TPLinkPlug
 from datetime import timedelta
 import time
 from octoprint_smart_pow.lib.clock_utils import wait_untill
 
 
-# TODO this code is duplicate with test_power_state.  Consolidate the two fixtures
-@pytest.fixture
-def api_power_state_off():
-    return {
-            API_POWER_STATE_KEY: "Off"
-    }
 
-@pytest.fixture
-def api_power_state_on():
-    return {
-            API_POWER_STATE_KEY: "On"
-    }
+
 
 # XXX tag this test as a "long_test" since it takes more than 1 second to complete.
 class TestPowerStatePublisher:
-    @pytest.fixture
-    def event_manager(self):
-        octoprint.plugin.plugin_manager(init=True)
-        event_manager = octoprint.events.EventManager()
-        event_manager.fire(octoprint.events.Events.STARTUP)
-        yield event_manager
-        event_manager.fire(octoprint.events.Events.SHUTDOWN)
+
 
     @pytest.fixture(autouse=True)
-    def publisher(
-        self, event_manager, tplink_plug_client: TPLinkClient
-    ):
+    def publisher(self, event_manager, tplink_plug_client: TPLinkPlug):
         publisher = PowerStatePublisher(event_manager, tplink_plug_client)
         publisher.start()
         yield publisher
@@ -53,7 +35,7 @@ class TestPowerStatePublisher:
     async def test_publish_power_state_changed_events_from_off_on_off_on(
         self,
         event_manager: octoprint.events.EventManager,
-        tplink_plug_client: TPLinkClient,
+        tplink_plug_client: TPLinkPlug,
         backing_smart_device: SmartPlug,
         api_power_state_off,
         api_power_state_on,
@@ -73,14 +55,13 @@ class TestPowerStatePublisher:
         def create_condition(expected_payload: APIPowerState):
             def condition():
                 return subscriber.call_args == mocker.call(
-                    Events.POWER_STATE_CHANGED_EVENT_NAME(), expected_payload
+                    Events.POWER_STATE_CHANGED_EVENT(), expected_payload
                 )
 
             return condition
 
         event_manager.subscribe(
-            event=Events.POWER_STATE_CHANGED_EVENT_NAME(),
-            callback=subscriber
+            event=Events.POWER_STATE_CHANGED_EVENT(), callback=subscriber
         )
         # Simulate an external device turn-on
         await backing_smart_device.turn_on()

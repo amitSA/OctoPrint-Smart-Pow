@@ -10,8 +10,9 @@ class PowerState(Enum):
 
 
 # API
+POWER_STATE_DO_CHANGE_API_COMMAND = "set_power_state"
+
 API_POWER_STATE_KEY = "power_state"
-API_POWER_STATE_SET_COMMAND = "set_power_state"
 # Type for a dict object representing PowerState data consumable by APIs
 # Required Keys:
 #   API_POWER_STATE_KEY: bool

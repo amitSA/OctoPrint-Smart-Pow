@@ -1,7 +1,9 @@
 import asyncio
 from datetime import timedelta
 from octoprint.events import EventManager
-from octoprint_smart_pow.lib.event_manager_helpers import fire_power_state_changed_event
+from octoprint_smart_pow.lib.event_manager_helpers import (
+    fire_power_state_changed_event,
+)
 from octoprint_smart_pow.lib.smart_plug_client import SmartPlugClient
 from octoprint_smart_pow.lib.data.power_state import (
     PowerState,
@@ -16,7 +18,7 @@ from octoprint_smart_pow.lib.async_interval_scheduler import (
 
 class PowerStatePublisher:
     MAX_CONNECTION_FAILED_RETRY_ATTEMPTS = 20
-    POLL_INTERVAL_FOR_READ=timedelta(seconds=2)
+    POLL_INTERVAL_FOR_READ = timedelta(seconds=2)
 
     """
     Listen to state change events for a a smart power plug, and broadcast them on the EventManager
@@ -34,9 +36,13 @@ class PowerStatePublisher:
 
         # An object that will call a routine on an interval
         self.interval_scheduler = AsyncIntervalScheduler(
-            routine=self.__publish_if_changed, interval=self.POLL_INTERVAL_FOR_READ
+            routine=self.__publish_if_changed,
+            interval=self.POLL_INTERVAL_FOR_READ,
         )
-        self.last_updated_state = None
+        self.last_updated_state = PowerState.UNKNOWN
+
+    def get_state(self) -> PowerState:
+        return self.last_updated_state
 
     def start(self):
         """
@@ -66,7 +72,9 @@ class PowerStatePublisher:
                 if attempt == retry_attempts:
                     raise
                 self.logger.warning(
-                    "Error when reading Smart Plug state, retry attempt %d/%d after backoff...", attempt, retry_attempts
+                    "Error when reading Smart Plug state, retry attempt %d/%d after backoff...",
+                    attempt,
+                    retry_attempts,
                 )
                 await asyncio.sleep(backoff_seconds)
             finally:
@@ -88,5 +96,5 @@ class PowerStatePublisher:
                 self.last_updated_state,
                 current_state,
             )
-            fire_power_state_changed_event(self.event_manager,current_state)
+            fire_power_state_changed_event(self.event_manager, current_state)
             self.last_updated_state = current_state

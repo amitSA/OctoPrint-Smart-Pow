@@ -6,7 +6,8 @@ from kasa.tests.newfakes import FakeTransportProtocol
 import logging
 import asyncio
 from octoprint_smart_pow.lib.data.power_state import PowerState
-from octoprint_smart_pow.lib.tplink_plug_client import TPLinkClient
+from octoprint_smart_pow.lib.tplink_plug_client import TPLinkPlug
+
 
 @pytest.mark.asyncio
 class TestTPLinkPlugClient:
@@ -29,7 +30,7 @@ class TestTPLinkPlugClient:
         """Test whether we can read the correct power state"""
         assert await tplink_plug_client.read() is PowerState.OFF
 
-    async def test_set_power_state(self, tplink_plug_client: TPLinkClient):
+    async def test_set_power_state(self, tplink_plug_client: TPLinkPlug):
         """Test whether we can set the power state"""
         await tplink_plug_client.turn_on()
         assert await tplink_plug_client.read() is PowerState.ON

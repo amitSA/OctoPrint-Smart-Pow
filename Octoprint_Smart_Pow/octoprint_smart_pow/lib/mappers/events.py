@@ -1,4 +1,3 @@
-
 # def qualify_event_name(event, plugin_name=None):
 #     """
 #     When we register custom events with Octoprint, Octoprint actually

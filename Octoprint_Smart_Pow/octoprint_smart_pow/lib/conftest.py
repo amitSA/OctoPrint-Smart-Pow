@@ -1,10 +1,28 @@
+from octoprint_smart_pow.lib.data.power_state import API_POWER_STATE_KEY
 import pytest
 from json import loads
 from pathlib import Path
 from kasa import SmartPlug
 from kasa.tests.newfakes import FakeTransportProtocol
-from octoprint_smart_pow.lib.tplink_plug_client import TPLinkClient
+from octoprint_smart_pow.lib.tplink_plug_client import TPLinkPlug
+import octoprint.plugin
 
+@pytest.fixture
+def api_power_state_off():
+    return {API_POWER_STATE_KEY: "Off"}
+
+
+@pytest.fixture
+def api_power_state_on():
+    return {API_POWER_STATE_KEY: "On"}
+
+@pytest.fixture(scope="session")
+def event_manager():
+    octoprint.plugin.plugin_manager(init=True)
+    event_manager = octoprint.events.EventManager()
+    event_manager.fire(octoprint.events.Events.STARTUP)
+    yield event_manager
+    event_manager.fire(octoprint.events.Events.SHUTDOWN)
 
 @pytest.fixture
 def discovery_data():
@@ -12,7 +30,7 @@ def discovery_data():
     # It would be better to dynamically download this fixture file from the repo
     # as part of pytest setup.
     #    The commit should be pulled to the release-version that setup.py declares (and explicitly declare it in setup.py if the dep. isn't already)
-    file = Path(__file__).parent / "fixtures" / "HS100(US)_1.0.json"
+    file = Path(__file__).parent / "tests" / "fixtures" / "HS100(US)_1.0.json"
     return loads(file.read_text())
 
 
@@ -30,4 +48,4 @@ def backing_smart_device(fake_transport_protocol) -> SmartPlug:
 
 @pytest.fixture
 def tplink_plug_client(backing_smart_device):
-    return TPLinkClient(backing_smart_device)
+    return TPLinkPlug(backing_smart_device)

@@ -11,7 +11,7 @@ from octoprint_smart_pow.lib.thread_utils import run_in_thread
 from octoprint_smart_pow.lib.tplink_plug_client import TPLinkPlug
 
 
-class PowerController:
+class PowerStateWriter:
     """
     Read and write power state using events.
     """

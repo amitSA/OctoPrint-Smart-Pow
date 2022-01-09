@@ -1,6 +1,6 @@
 import unittest
 import funcy
-from octoprint_smart_pow.lib.features.power_controller import PowerController
+from octoprint_smart_pow.lib.features.power_state_writer import PowerStateWriter
 import pytest
 import octoprint
 from octoprint.events import EventManager
@@ -10,15 +10,15 @@ from octoprint_smart_pow.lib.data.power_state import PowerState
 from octoprint_smart_pow.lib.tplink_plug_client import TPLinkPlug
 
 
-class TestPowerController:
+class TestPowerStateWriter:
 
     @pytest.fixture
-    def power_controller(
+    def power_state_writer(
         self,
         tplink_plug_client,
         event_manager: EventManager
     ):
-        return PowerController(
+        return PowerStateWriter(
             plug=tplink_plug_client,
             event_manager=event_manager
         )
@@ -26,7 +26,7 @@ class TestPowerController:
     @pytest.mark.asyncio
     async def test_read_and_write_power_state(
         self,
-        power_controller,
+        power_state_writer,
         event_manager : EventManager,
         tplink_plug_client : TPLinkPlug,
         api_power_state_off,

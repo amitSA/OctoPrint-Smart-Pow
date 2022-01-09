@@ -22,6 +22,8 @@ $(function() {
             // self.currentUrl(self.newUrl());
         };
 
+        // TODO: I've noticed a bug that on server startup, the web-UI
+        // will keep showing 'Unknown' untill a power_state button is clicked
         self.get_power_state = function() {
             console.log("Querying API for power state")
             OctoPrint.simpleApiGet("smart_pow")
@@ -29,6 +31,12 @@ $(function() {
                 // make this data key a constant
                 power_state = data["power_state"]
                 self.power_state(power_state)
+                // If the server doesn't know the power_state yet,
+                // then let's ask it after a backoff
+                backoff = 1000
+                if(power_state == "Unknown") {
+                    setTimeout(self.get_power_state,backoff)
+                }
             }).fail(function (err) {
                 console.log(err)
             })

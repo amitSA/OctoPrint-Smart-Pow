@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import asyncio
+import time
 import octoprint.plugin
 from octoprint_smart_pow.lib.data.conditional_off import (
     CONDITIONAL_POWER_OFF_API_KEY,
@@ -14,8 +15,8 @@ from octoprint_smart_pow.lib import events
 from octoprint_smart_pow.lib.event_manager_helpers import (
     fire_power_state_changed_event,
 )
-from octoprint_smart_pow.lib.features.power_controller import PowerController
-from octoprint_smart_pow.lib.power_state_publisher import PowerStatePublisher
+from octoprint_smart_pow.lib.features.power_state_writer import PowerStateWriter
+from octoprint_smart_pow.lib.features.power_state_publisher import PowerStatePublisher
 from octoprint_smart_pow.lib import discoverer
 from octoprint.events import EventManager
 
@@ -47,7 +48,7 @@ class SmartPowPlugin(
     octoprint.plugin.SimpleApiPlugin,
 ):
     def __init__(self):
-        pass
+        self.power_publisher = None
 
     # TODO: documentation for this hook says not to put long running tasks here
     # discoverer.find_tp_link_plug is a long running operation, I should probably
@@ -72,7 +73,7 @@ class SmartPowPlugin(
         self.power_publisher.start()
 
         # initialize power controller
-        self.power_controller = PowerController(
+        self.power_state_writer = PowerStateWriter(
             plug=self.tp_smart_plug,
             event_manager=self.event_manager,
             logger=self._logger
@@ -174,6 +175,10 @@ class SmartPowPlugin(
         Return all relevant data structures since there can only be one GET
         implemented by the SimpleAPIPlugin
         """
+        # Wait for dependencies to be defined by startup
+        while self.power_publisher is None:
+            time.sleep(1)
+
         api_power_state: APIPowerState = power_state_to_api_repr(
             self.power_publisher.get_state()
         )

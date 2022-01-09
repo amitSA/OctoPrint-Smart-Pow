@@ -1,5 +1,5 @@
 from octoprint_smart_pow.lib.data.events import Events
-from octoprint_smart_pow.lib.power_state_publisher import PowerStatePublisher
+from octoprint_smart_pow.lib.features.power_state_publisher import PowerStatePublisher
 import pytest
 import asyncio
 import octoprint.events

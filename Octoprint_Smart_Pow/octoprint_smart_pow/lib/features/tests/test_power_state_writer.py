@@ -4,7 +4,7 @@ from octoprint_smart_pow.lib.features.power_state_writer import PowerStateWriter
 import pytest
 import octoprint
 from octoprint.events import EventManager
-from octoprint_smart_pow.lib.clock_utils import wait_untill
+from octoprint_smart_pow.lib.wait_utils import wait_untill
 from octoprint_smart_pow.lib.data.events import Events
 from octoprint_smart_pow.lib.data.power_state import PowerState
 from octoprint_smart_pow.lib.tplink_plug_client import TPLinkPlug
@@ -75,7 +75,9 @@ class TestPowerStateWriter:
         )
         assert await tplink_plug_client.read() == PowerState.ON
 
-    def wait_for_event(
+    # TODO what is this test testing ?
+    @pytest.mark.asyncio
+    async def wait_for_event(
         self,
         event : octoprint.events.Events,
         expected_payload,
@@ -85,7 +87,7 @@ class TestPowerStateWriter:
         def event_received_with_payload():
             return mocker.call(event,expected_payload) in listener.call_args_list
 
-        wait_untill(
+        await wait_untill(
             condition=event_received_with_payload,
             condition_name=f"event {event} received with expected payload"
         )

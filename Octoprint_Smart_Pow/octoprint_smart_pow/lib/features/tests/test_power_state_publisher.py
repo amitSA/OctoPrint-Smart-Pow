@@ -14,7 +14,7 @@ from kasa import SmartPlug
 from octoprint_smart_pow.lib.tplink_plug_client import TPLinkPlug
 from datetime import timedelta
 import time
-from octoprint_smart_pow.lib.clock_utils import wait_untill
+from octoprint_smart_pow.lib.wait_utils import wait_untill
 
 
 
@@ -66,7 +66,7 @@ class TestPowerStatePublisher:
         # Simulate an external device turn-on
         await backing_smart_device.turn_on()
         # Wait for the subscriber to be called
-        wait_untill(
+        await wait_untill(
             condition=create_condition(api_power_state_on),
             poll_period=timedelta(seconds=1),
             timeout=timedelta(seconds=10),
@@ -75,7 +75,7 @@ class TestPowerStatePublisher:
 
         # Simulate an external device turn-off
         await backing_smart_device.turn_off()
-        wait_untill(
+        await wait_untill(
             condition=create_condition(api_power_state_off),
             poll_period=timedelta(seconds=1),
             timeout=timedelta(seconds=10),

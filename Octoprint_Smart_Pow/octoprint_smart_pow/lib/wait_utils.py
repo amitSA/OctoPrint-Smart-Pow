@@ -1,9 +1,12 @@
 import time
 from datetime import datetime, timedelta
 import funcy
+from unittest import mock
+import asyncio
+from octoprint.events import EventManager
 
 
-def wait_untill(
+async def wait_untill(
     condition,
     poll_period=timedelta(seconds=1),
     timeout=timedelta(seconds=10),
@@ -35,10 +38,38 @@ def wait_untill(
         int(time()) < start_time + timeout.total_seconds()
         and not condition_is_true
     ):
-        sleep(poll_period.total_seconds())
+        await asyncio.sleep(poll_period.total_seconds())
         condition_is_true = cond_callable()
 
     if not condition_is_true:
         raise TimeoutError(
             f"Waited {timeout} time for condition '{condition_name}' to be True"
+        )
+
+
+async def wait_untill_event(
+    event_manager : EventManager,
+    event,
+    payload=None,
+    poll_period=timedelta(seconds=1),
+    timeout=timedelta(seconds=10)
+):
+    try:
+        subscriber = mock.Mock()
+        def event_was_published():
+            return subscriber.call_args == mock.call(
+                event, payload
+            )
+        event_manager.subscribe(
+            event=event, callback=subscriber
+        )
+        await wait_untill(
+            condition=event_was_published,
+            poll_period=poll_period,
+            timeout=timeout,
+            condition_name=f"Event {event} was published",
+        )
+    finally:
+        event_manager.unsubscribe(
+            event=event, callback=subscriber
         )

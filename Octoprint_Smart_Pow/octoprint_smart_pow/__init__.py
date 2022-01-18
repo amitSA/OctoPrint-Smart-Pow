@@ -3,9 +3,9 @@ from __future__ import absolute_import, unicode_literals
 import asyncio
 import time
 import octoprint.plugin
-from octoprint_smart_pow.lib.data.conditional_off import (
-    CONDITIONAL_POWER_OFF_API_KEY,
-    CONDITIONAL_POWER_OFF_API_COMMAND,
+from octoprint_smart_pow.lib.data.automatic_power_off import (
+    AUTOMATIC_POWER_OFF_SCHEDULED_API_KEY,
+    AUTOMATIC_POWER_OFF_API_COMMAND,
 )
 from octoprint_smart_pow.lib.data.power_state import (
     PowerState,
@@ -144,7 +144,7 @@ class SmartPowPlugin(
 
             # This command is a proxy for the respective event
             POWER_STATE_DO_CHANGE_API_COMMAND: [API_POWER_STATE_KEY],
-            CONDITIONAL_POWER_OFF_API_COMMAND: [CONDITIONAL_POWER_OFF_API_KEY],
+            AUTOMATIC_POWER_OFF_API_COMMAND: [AUTOMATIC_POWER_OFF_SCHEDULED_API_KEY],
         }
 
     def on_api_command(self, command, data):
@@ -158,9 +158,9 @@ class SmartPowPlugin(
                 Events.POWER_STATE_DO_CHANGE_EVENT(),
                 payload=data
             )
-        elif command == CONDITIONAL_POWER_OFF_API_COMMAND:
+        elif command == AUTOMATIC_POWER_OFF_API_COMMAND:
             # TODO I might want to create a mapper to do this
-            enable: bool = data[CONDITIONAL_POWER_OFF_API_KEY]
+            enable: bool = data[AUTOMATIC_POWER_OFF_SCHEDULED_API_KEY]
             if enable is True:
                 raise ValueError(f"cannot enable conditional_off from UI")
             self.__set_conditional_power_off(enable=enable)

@@ -1,13 +1,16 @@
+import pytest
 from datetime import timedelta
 
 from octoprint_smart_pow.lib.async_interval_scheduler import (
     AsyncIntervalScheduler,
 )
-from octoprint_smart_pow.lib.clock_utils import wait_untill
+from octoprint_smart_pow.lib.wait_utils import wait_untill
 
 
 class TestAsyncIntervalScheduler:
-    def test_running_routine(self, mocker):
+
+    @pytest.mark.asyncio
+    async def test_running_routine(self, mocker):
         EXPECTED_ROUTINE_CALLS = 3
 
         closure = {"calls": 1}
@@ -31,7 +34,7 @@ class TestAsyncIntervalScheduler:
         closure["scheduler"] = scheduler
 
         scheduler.start()
-        wait_untill(
+        await wait_untill(
             condition=lambda: scheduler.has_finished(),
             condition_name="scheduler has finished",
         )

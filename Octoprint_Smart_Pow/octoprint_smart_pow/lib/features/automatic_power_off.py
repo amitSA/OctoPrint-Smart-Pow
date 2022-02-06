@@ -1,4 +1,5 @@
 
+import funcy
 from datetime import timedelta
 from typing import Callable
 import octoprint.printer
@@ -22,10 +23,9 @@ class AutomaticPowerOff:
     #   and have __init__.py pass the timer event as a constructor to this class.
     TIMEOUT_EVENT = "plugin_smart_pow_timeout"
 
-    def __init__(self, event_manager: EventManager, printer, temperature_threshold = 40):
-        self.state = ScheduledPowerOffState
-        self.state.scheduled = False
-        self.ready_to_turn_off : Callable = self.__create_ready_to_turn_off_condition(printer, temperature_threshold)
+    def __init__(self, event_manager: EventManager, printer_ready_to_shutdown: Callable[[], bool] ):
+        self.state = ScheduledPowerOffState(scheduled=False)
+        self.printer_ready_to_shutdown = printer_ready_to_shutdown
         self.event_manager = event_manager
         self.timer = None
 
@@ -34,7 +34,7 @@ class AutomaticPowerOff:
         All events regarding the finishing of a print
         """
         return [
-            self.octoprint.events.Events.PrintDone,
+            octoprint.events.Events.PRINT_DONE,
         ]
 
     def __get_events(self):
@@ -43,9 +43,9 @@ class AutomaticPowerOff:
         """
         return [
             self.TIMEOUT_EVENT,
-            self.octoprint.events.Events.PrintStarted,
+            octoprint.events.Events.PRINT_STARTED,
             *self.__get_print_finished_events(),
-            Events.AUTOMATIC_POWER_OFF_DO_CHANGE_EVENT
+            Events.AUTOMATIC_POWER_OFF_DO_CHANGE_EVENT()
         ]
 
     def __init_timer(self):
@@ -83,6 +83,9 @@ class AutomaticPowerOff:
 
         A scheduled power-off will automatically be unscheduled
         """
+        if not self.enabled:
+            raise RuntimeError("Cannot disabled if it hasn't been enabled yet")
+
         # TODO is self.on_event the same as before ?
         self.__unsubscribe(
             events=self.__get_events(),
@@ -90,24 +93,18 @@ class AutomaticPowerOff:
         )
         self.timer.stop()
 
-    def __create_ready_to_turn_off_condition(self, printer: octoprint.printer.PrinterInterface, temperature_threshold):
-        """
-        Return a lambda that when called indicates that the printer is ready to be turned off
-        """
-        def condition():
-            temp_data = printer.get_current_temperatures()
-            return temp_data["bed"] < temperature_threshold and temp_data["tool"] < temperature_threshold
-
-        return condition
+    @property
+    def enabled(self):
+        return self.timer.running()
 
     def on_event(self, event: octoprint.events.Events, payload):
         if event == self.TIMEOUT_EVENT:
-            if self.state.scheduled and self.ready_to_turn_off():
+            if self.state.scheduled and self.printer_ready_to_shutdown():
                 fire_power_state_do_change_event(
                     self.event_manager,
                     power_state=PowerState.OFF
                 )
-        elif event == octoprint.events.Events.PrintStarted:
+        elif event == octoprint.events.Events.PRINT_STARTED:
             if self.state.scheduled:
                 fire_automatic_power_off_do_change_event(
                     self.event_manager,
@@ -123,7 +120,7 @@ class AutomaticPowerOff:
             desired_state = api_scheduled_power_off_state_to_internal_repr(
                 payload
             )
-            if self.scheduled != desired_state.scheduled:
+            if self.state.scheduled != desired_state.scheduled:
                 self.state = desired_state
                 fire_automatic_power_off_changed_event(
                     self.event_manager,

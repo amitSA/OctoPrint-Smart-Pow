@@ -51,6 +51,11 @@ class AsyncIntervalScheduler:
     def has_finished(self):
         return self._has_finished
 
+    def running(self):
+        """
+        Returns whether start() has been called before a stop()
+        """
+        return self.t_helper.is_alive()
 
 # I used this as a manual test since it was quicker than writing unit-tests. HarHarHar
 if __name__ == "__main__":

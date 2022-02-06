@@ -17,6 +17,8 @@ class Events:
             event="power_state_do_change_event", prefix=cls.prefix
         )
 
+    # TODO: this should be renamed to something to do with "scheduling"
+    # Its confusing what this means right now
     @classmethod
     def AUTOMATIC_POWER_OFF_CHANGED_EVENT(cls):
         return cls.__get_event_name(

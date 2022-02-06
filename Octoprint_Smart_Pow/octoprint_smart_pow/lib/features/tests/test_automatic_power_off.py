@@ -1,6 +1,8 @@
 
+from octoprint_smart_pow.lib.mappers.automatic_power_off import scheduled_power_off_state_to_api_repr
 import pytest
 import asyncio
+import octoprint
 from datetime import timedelta
 from octoprint_smart_pow.lib.data.automatic_power_off import ScheduledPowerOffState
 from octoprint_smart_pow.lib.data.events import Events
@@ -20,27 +22,90 @@ class TestAutomaticPowerOff:
             auto_power_off.disable()
 
     @pytest.mark.asyncio
-    async def test_shutdown_after_print_finishes(self, event_manager, auto_power_off):
+    async def test_will_not_shutdown_if_printer_not_started(self, event_manager, auto_power_off):
         auto_power_off.enable()
 
-        fire_automatic_power_off_do_change_event(
-            event_manager,
-            ScheduledPowerOffState(scheduled=True)
+        event_manager.fire(
+            event=octoprint.events.Events.PRINT_DONE
         )
-        # The order matters of gathered co-routines because
-        # the wait will yield execution after it's listening for events
-        await asyncio.gather(
-            wait_untill_event(
+
+        await wait_untill_event(
+            event_manager=event_manager,
+            event=Events.POWER_STATE_DO_CHANGE_EVENT(),
+            payload=power_state_to_api_repr(PowerState.OFF),
+            timeout=timedelta(seconds=10),
+        ),
+
+    @pytest.mark.asyncio
+    async def test_shutdowns_printer_after_print_finished(self, event_manager, auto_power_off):
+        auto_power_off.enable()
+
+        event_manager.fire(
+            event=octoprint.events.Events.PRINT_STARTED
+        )
+
+        event_manager.fire(
+            event=octoprint.events.Events.PRINT_DONE
+        )
+
+        await wait_untill_event(
+            event_manager=event_manager,
+            event=Events.POWER_STATE_DO_CHANGE_EVENT(),
+            payload=power_state_to_api_repr(PowerState.OFF),
+            timeout=timedelta(seconds=10),
+        ),
+
+    @pytest.mark.asyncio
+    async def test_cancel_shutdown_if_new_print_starts(self, event_manager, auto_power_off):
+        auto_power_off.enable()
+
+        event_manager.fire(
+            event=octoprint.events.Events.PRINT_STARTED
+        )
+
+        event_manager.fire(
+            event=octoprint.events.Events.PRINT_DONE
+        )
+
+        # Wait untill the poweroff is scheduled before continuing the test
+        #   because the goal of this test is to verify that the schedule can be
+        #   disabled after turning on
+        await wait_untill_event(
+            event_manager=event_manager,
+            event=Events.AUTOMATIC_POWER_OFF_CHANGED_EVENT(),
+            payload=scheduled_power_off_state_to_api_repr(
+                ScheduledPowerOffState(scheduled=True)
+            ),
+            timeout=timedelta(seconds=10),
+        ),
+
+        event_manager.fire(
+            event=octoprint.events.Events.PRINT_STARTED
+        )
+
+        # Verify that the scheduled shutdown is stopped
+        # Why? Because after a new print is started we don't want to shutdown!
+        await wait_untill_event(
+            event_manager=event_manager,
+            event=Events.AUTOMATIC_POWER_OFF_CHANGED_EVENT(),
+            payload=scheduled_power_off_state_to_api_repr(
+                ScheduledPowerOffState(scheduled=False)
+            ),
+            timeout=timedelta(seconds=10),
+        ),
+
+
+    @pytest.mark.asyncio
+    async def test_nothing_happens_if_feature_is_not_enabled(self, event_manager, auto_power_off):
+        # Don't enable!
+        # auto_power_off.enable()
+
+        assert auto_power_off.enabled is False
+
+        # The timer should not be turned on to trigger auto_power_off
+        with pytest.raises(TimeoutError):
+            await wait_untill_event(
                 event_manager=event_manager,
-                event=Events.POWER_STATE_DO_CHANGE_EVENT(),
-                payload=power_state_to_api_repr(PowerState.OFF),
+                event=AutomaticPowerOff.TIMEOUT_EVENT,
                 timeout=timedelta(seconds=10),
             ),
-        )
-        auto_power_off.disable()
-
-    def test_will_not_shutdown_if_not_scheduled(self, event_manager):
-        pass
-
-    def test_cancel_shutdown_if_new_print_starts(self, event_manager):
-        pass

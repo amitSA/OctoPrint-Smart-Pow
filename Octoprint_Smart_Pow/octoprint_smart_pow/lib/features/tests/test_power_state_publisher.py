@@ -1,5 +1,7 @@
 from octoprint_smart_pow.lib.data.events import Events
-from octoprint_smart_pow.lib.features.power_state_publisher import PowerStatePublisher
+from octoprint_smart_pow.lib.features.power_state_publisher import (
+    PowerStatePublisher,
+)
 import pytest
 import asyncio
 import octoprint.events
@@ -17,13 +19,8 @@ import time
 from octoprint_smart_pow.lib.wait_utils import wait_untill
 
 
-
-
-
 # XXX tag this test as a "long_test" since it takes more than 1 second to complete.
 class TestPowerStatePublisher:
-
-
     @pytest.fixture(autouse=True)
     def publisher(self, event_manager, tplink_plug_client: TPLinkPlug):
         publisher = PowerStatePublisher(event_manager, tplink_plug_client)

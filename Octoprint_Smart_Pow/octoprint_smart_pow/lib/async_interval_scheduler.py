@@ -57,6 +57,7 @@ class AsyncIntervalScheduler:
         """
         return self.t_helper.is_alive()
 
+
 # I used this as a manual test since it was quicker than writing unit-tests. HarHarHar
 if __name__ == "__main__":
     squak = lambda: print("Caaw!")

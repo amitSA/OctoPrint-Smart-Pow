@@ -7,6 +7,7 @@ from kasa.tests.newfakes import FakeTransportProtocol
 from octoprint_smart_pow.lib.tplink_plug_client import TPLinkPlug
 import octoprint.plugin
 
+
 @pytest.fixture
 def api_power_state_off():
     return {API_POWER_STATE_KEY: "Off"}
@@ -16,6 +17,7 @@ def api_power_state_off():
 def api_power_state_on():
     return {API_POWER_STATE_KEY: "On"}
 
+
 @pytest.fixture(scope="session")
 def event_manager():
     octoprint.plugin.plugin_manager(init=True)
@@ -23,6 +25,7 @@ def event_manager():
     event_manager.fire(octoprint.events.Events.STARTUP)
     yield event_manager
     event_manager.fire(octoprint.events.Events.SHUTDOWN)
+
 
 @pytest.fixture
 def discovery_data():

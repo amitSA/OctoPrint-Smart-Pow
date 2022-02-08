@@ -8,7 +8,6 @@ from octoprint_smart_pow.lib.wait_utils import wait_untill
 
 
 class TestAsyncIntervalScheduler:
-
     @pytest.mark.asyncio
     async def test_running_routine(self, mocker):
         EXPECTED_ROUTINE_CALLS = 3

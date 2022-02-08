@@ -9,9 +9,7 @@ from octoprint_smart_pow.lib.mappers.power_state import (
 )
 
 
-def test_power_state_to_api_repr(
-    api_power_state_off,
-    api_power_state_on):
+def test_power_state_to_api_repr(api_power_state_off, api_power_state_on):
     assert power_state_to_api_repr(PowerState.OFF) == api_power_state_off
     assert power_state_to_api_repr(PowerState.ON) == api_power_state_on
 

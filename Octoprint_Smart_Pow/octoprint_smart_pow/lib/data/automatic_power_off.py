@@ -6,6 +6,7 @@ AUTOMATIC_POWER_OFF_SCHEDULED_API_KEY = (
     "automatic_power_off_enabled"  # boolean valued data type
 )
 
+
 @dataclass
-class ScheduledPowerOffState():
+class ScheduledPowerOffState:
     scheduled: bool

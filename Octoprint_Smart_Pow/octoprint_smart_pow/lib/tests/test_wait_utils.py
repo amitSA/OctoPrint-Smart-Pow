@@ -21,6 +21,7 @@ def mocked_condition(mocker):
     mocked_condition.side_effect = [False, False, False, True]
     return mocked_condition
 
+
 @pytest.mark.asyncio
 async def test_wait_untill_passes(mocked_time, mocked_condition):
     await wait_untill(
@@ -33,6 +34,7 @@ async def test_wait_untill_passes(mocked_time, mocked_condition):
 
     assert len(mocked_condition.call_args_list) == 4
 
+
 @pytest.mark.asyncio
 async def test_wait_untill_fails(mocked_time, mocked_condition):
     with pytest.raises(TimeoutError):
@@ -44,33 +46,33 @@ async def test_wait_untill_fails(mocked_time, mocked_condition):
             sleep=lambda x: True,
         )
 
+
 @pytest.fixture
 def publish(event_manager):
     """
     Returns a function that will publish an event
     """
-    async def _publish(event,payload=None):
-        event_manager.fire(event,payload)
+
+    async def _publish(event, payload=None):
+        event_manager.fire(event, payload)
+
     return _publish
+
 
 @pytest.mark.asyncio
 async def test_wait_untill_event_passes(event_manager, publish):
     await asyncio.gather(
-        wait_untill_event(
-            event_manager=event_manager,
-            event="TEST_EVENT"
-        ),
-        publish(event="TEST_EVENT")
+        wait_untill_event(event_manager=event_manager, event="TEST_EVENT"),
+        publish(event="TEST_EVENT"),
     )
 
     await asyncio.gather(
         wait_untill_event(
-            event_manager=event_manager,
-            event="TEST_EVENT",
-            payload="hi"
+            event_manager=event_manager, event="TEST_EVENT", payload="hi"
         ),
-        publish(event="TEST_EVENT",payload="hi")
+        publish(event="TEST_EVENT", payload="hi"),
     )
+
 
 @pytest.mark.asyncio
 async def test_wait_untill_event_fails(event_manager, publish):
@@ -84,12 +86,10 @@ async def test_wait_untill_event_fails(event_manager, publish):
     with pytest.raises(TimeoutError):
         await asyncio.gather(
             wait_untill_event(
-                event_manager=event_manager,
-                event="TEST_EVENT",
-                payload="a"
+                event_manager=event_manager, event="TEST_EVENT", payload="a"
             ),
             # event with mismatched payload
-            publish(event="TEST_EVENT",payload="b"),
+            publish(event="TEST_EVENT", payload="b"),
             # event with mismatched event string
-            publish(event="TEST_EVEN",payload="a"),
-    )
+            publish(event="TEST_EVEN", payload="a"),
+        )

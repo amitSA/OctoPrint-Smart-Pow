@@ -13,15 +13,28 @@ from octoprint_smart_pow.lib.data.power_state import (
 from octoprint_smart_pow.lib.data.events import Events
 from octoprint_smart_pow.lib import events
 from octoprint_smart_pow.lib.event_manager_helpers import (
+    fire_automatic_power_off_do_change_event,
     fire_power_state_changed_event,
 )
+from octoprint_smart_pow.lib.features.automatic_power_off import (
+    AutomaticPowerOff,
+)
 from octoprint_smart_pow.lib.features.power_state_writer import PowerStateWriter
-from octoprint_smart_pow.lib.features.power_state_publisher import PowerStatePublisher
+from octoprint_smart_pow.lib.features.power_state_publisher import (
+    PowerStatePublisher,
+)
 from octoprint_smart_pow.lib import discoverer
 from octoprint.events import EventManager
 
 import octoprint.plugin
 import flask
+from octoprint_smart_pow.lib.features.printer_shutdown_predicate import (
+    printer_ready_to_shutdown,
+)
+from octoprint_smart_pow.lib.mappers.automatic_power_off import (
+    api_scheduled_power_off_state_to_internal_repr,
+    scheduled_power_off_state_to_api_repr,
+)
 
 from octoprint_smart_pow.lib.mappers.power_state import (
     power_state_to_api_repr,
@@ -76,12 +89,14 @@ class SmartPowPlugin(
         self.power_state_writer = PowerStateWriter(
             plug=self.tp_smart_plug,
             event_manager=self.event_manager,
-            logger=self._logger
+            logger=self._logger,
         )
 
-        # Turn off the conditional power off feature by default
-        # It will automatically get turned on by the UI after a print finishes
-        self.__set_conditional_power_off(enable=False)
+        self.automatic_power_off = AutomaticPowerOff(
+            self.event_manager,
+            funcy.partial(printer_ready_to_shutdown, self._printer),
+        )
+        self.automatic_power_off.enable()  # TODO: Instead of being hard-coded, we want it controlled by the UI
 
     def get_settings_defaults(self):
         """
@@ -102,14 +117,14 @@ class SmartPowPlugin(
     def register_custom_events(self):
         custom_events = [
             Events.POWER_STATE_CHANGED_EVENT(),
-            Events.CONDITIONAL_POWER_OFF_ENABLED_EVENT(),
+            Events.AUTOMATIC_POWER_OFF_CHANGED_EVENT(),
         ]
         # the order of these operations matter
         Events.set_prefix(f"plugin_smart_pow")
         return custom_events
 
     def on_event(self, event: str, payload):
-        if event == Events.CONDITIONAL_POWER_OFF_ENABLED_EVENT():
+        if event == Events.AUTOMATIC_POWER_OFF_CHANGED_EVENT():
             self._logger.info(f"Received event '{event}'")
             self.cond_power_off = payload
 
@@ -141,32 +156,30 @@ class SmartPowPlugin(
     def get_api_commands(self):
         return {
             # Each field is the list of all property names this command takes
-
             # This command is a proxy for the respective event
             POWER_STATE_DO_CHANGE_API_COMMAND: [API_POWER_STATE_KEY],
-            AUTOMATIC_POWER_OFF_API_COMMAND: [AUTOMATIC_POWER_OFF_SCHEDULED_API_KEY],
+            AUTOMATIC_POWER_OFF_API_COMMAND: [
+                AUTOMATIC_POWER_OFF_SCHEDULED_API_KEY
+            ],
         }
 
     def on_api_command(self, command, data):
         """
         Defining POST route
         """
-        import flask # TODO DO I NEED THIS ?
+        import flask  # TODO DO I NEED THIS ?
+
         # TODO What happens if an exception happens ? Do I need to setup a flask error response
         if command == POWER_STATE_DO_CHANGE_API_COMMAND:
             self.event_manager.fire(
-                Events.POWER_STATE_DO_CHANGE_EVENT(),
-                payload=data
+                Events.POWER_STATE_DO_CHANGE_EVENT(), payload=data
             )
         elif command == AUTOMATIC_POWER_OFF_API_COMMAND:
-            # TODO I might want to create a mapper to do this
-            enable: bool = data[AUTOMATIC_POWER_OFF_SCHEDULED_API_KEY]
-            if enable is True:
-                raise ValueError(f"cannot enable conditional_off from UI")
-            self.__set_conditional_power_off(enable=enable)
+            fire_automatic_power_off_do_change_event(
+                api_scheduled_power_off_state_to_internal_repr(data)
+            )
         else:
             raise ValueError(f"command {command} is unrecognized")
-
 
     def on_api_get(self, request):
         """
@@ -176,26 +189,17 @@ class SmartPowPlugin(
         implemented by the SimpleAPIPlugin
         """
         # Wait for dependencies to be defined by startup
+        # XXX hacky
         while self.power_publisher is None:
             time.sleep(1)
 
         api_power_state: APIPowerState = power_state_to_api_repr(
             self.power_publisher.get_state()
         )
-        return flask.jsonify(api_power_state)
-
-    # Conditional_Off stuff
-    def __set_conditional_power_off(self, enable: bool):
-        """
-        Set the conditional_power_off feature to either on or off
-
-        params
-        enable: True will turn it on and False will turn it off
-        """
-        # TODO Internally turn off or on
-        self.event_manager.fire(
-            Events.CONDITIONAL_POWER_OFF_ENABLED_EVENT(), enable
+        automatic_power_off = scheduled_power_off_state_to_api_repr(
+            self.automatic_power_off.get_state()
         )
+        return flask.jsonify({**api_power_state, **automatic_power_off})
 
 
 plugin = SmartPowPlugin()

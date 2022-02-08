@@ -12,7 +12,6 @@ async def wait_untill(
     timeout=timedelta(seconds=10),
     condition_name="no_name",
     time=time.time,
-    sleep=time.sleep,
     *condition_args,
     **condition_kwargs,
 ):
@@ -48,21 +47,19 @@ async def wait_untill(
 
 
 async def wait_untill_event(
-    event_manager : EventManager,
+    event_manager: EventManager,
     event,
     payload=None,
     poll_period=timedelta(seconds=1),
-    timeout=timedelta(seconds=10)
+    timeout=timedelta(seconds=10),
 ):
     try:
         subscriber = mock.Mock()
+
         def event_was_published():
-            return subscriber.call_args == mock.call(
-                event, payload
-            )
-        event_manager.subscribe(
-            event=event, callback=subscriber
-        )
+            return subscriber.call_args == mock.call(event, payload)
+
+        event_manager.subscribe(event=event, callback=subscriber)
         await wait_untill(
             condition=event_was_published,
             poll_period=poll_period,
@@ -70,6 +67,4 @@ async def wait_untill_event(
             condition_name=f"Event {event} was published",
         )
     finally:
-        event_manager.unsubscribe(
-            event=event, callback=subscriber
-        )
+        event_manager.unsubscribe(event=event, callback=subscriber)

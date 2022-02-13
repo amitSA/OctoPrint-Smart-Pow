@@ -4,3 +4,6 @@ octoprint
 *.log
 *.egg-info/
 dist/
+*.pyc
+.envrc
+*.nix

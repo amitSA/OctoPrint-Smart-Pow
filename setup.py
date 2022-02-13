@@ -31,15 +31,15 @@ plugin_url = "https://github.com/amitSA/Octoprint_Smart_Pow"
 plugin_license = "AGPLv3"
 
 # Any additional requirements besides OctoPrint should be listed here
-plugin_requires = ["python-kasa"]
+plugin_requires = ["python-kasa", "funcy"]
 
 # TODO "voluptuous" is a development dependency for python-kasa, we need it since we
-# use python-kasa internals that aren't in the regular dependency list
-# (Is this correct ?)
-dev_requires = ["pytest", "pytest-mock", "voluptuous", "pytest-asyncio", "black", "pylint"]
-# TODO Right now installing this plugin into octoprint also installs the dev_requires (development dependencies)
-#     Whats a good way to separate them ?
-plugin_requires += dev_requires
+# use python-kasa internals that aren't in the regular dependency list.
+# (Is this correct?)
+extras_require = {
+ 'dev': ["pytest-mock", "pytest", "voluptuous", "pytest-asyncio", "black", "pylint"]
+}
+
 ### --------------------------------------------------------------------------------------------------------------------
 ### More advanced options that you usually shouldn't have to touch follow after this point
 ### --------------------------------------------------------------------------------------------------------------------
@@ -92,6 +92,7 @@ setup_parameters = octoprint_setuptools.create_plugin_setup_parameters(
     url=plugin_url,
     license=plugin_license,
     requires=plugin_requires,
+    extra_requires=extras_require,
     additional_packages=plugin_additional_packages,
     ignored_packages=plugin_ignored_packages,
     additional_data=plugin_additional_data,

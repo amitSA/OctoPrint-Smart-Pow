@@ -6,3 +6,4 @@ octoprint
 dist/
 *.pyc
 .envrc
+*.nix

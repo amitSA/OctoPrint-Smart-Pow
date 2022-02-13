@@ -1,5 +1,7 @@
 from octoprint_smart_pow.lib.data.events import Events
-from octoprint_smart_pow.lib.features.power_state_publisher import PowerStatePublisher
+from octoprint_smart_pow.lib.features.power_state_publisher import (
+    PowerStatePublisher,
+)
 import pytest
 import asyncio
 import octoprint.events
@@ -14,16 +16,11 @@ from kasa import SmartPlug
 from octoprint_smart_pow.lib.tplink_plug_client import TPLinkPlug
 from datetime import timedelta
 import time
-from octoprint_smart_pow.lib.clock_utils import wait_untill
-
-
-
+from octoprint_smart_pow.lib.wait_utils import wait_untill
 
 
 # XXX tag this test as a "long_test" since it takes more than 1 second to complete.
 class TestPowerStatePublisher:
-
-
     @pytest.fixture(autouse=True)
     def publisher(self, event_manager, tplink_plug_client: TPLinkPlug):
         publisher = PowerStatePublisher(event_manager, tplink_plug_client)
@@ -66,7 +63,7 @@ class TestPowerStatePublisher:
         # Simulate an external device turn-on
         await backing_smart_device.turn_on()
         # Wait for the subscriber to be called
-        wait_untill(
+        await wait_untill(
             condition=create_condition(api_power_state_on),
             poll_period=timedelta(seconds=1),
             timeout=timedelta(seconds=10),
@@ -75,7 +72,7 @@ class TestPowerStatePublisher:
 
         # Simulate an external device turn-off
         await backing_smart_device.turn_off()
-        wait_untill(
+        await wait_untill(
             condition=create_condition(api_power_state_off),
             poll_period=timedelta(seconds=1),
             timeout=timedelta(seconds=10),

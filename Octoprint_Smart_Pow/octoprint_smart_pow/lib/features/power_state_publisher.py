@@ -11,7 +11,6 @@ from octoprint_smart_pow.lib.data.power_state import (
 )
 import logging
 import kasa
-from octoprint_smart_pow.lib.interval_scheduler import IntervalScheduler
 from octoprint_smart_pow.lib.async_interval_scheduler import (
     AsyncIntervalScheduler,
 )

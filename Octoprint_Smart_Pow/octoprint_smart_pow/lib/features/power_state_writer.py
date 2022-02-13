@@ -4,9 +4,13 @@ from octoprint.events import EventManager
 from octoprint_smart_pow.lib.data.events import Events
 from octoprint_smart_pow.lib.data.power_state import PowerState
 import logging
-from octoprint_smart_pow.lib.event_manager_helpers import fire_power_state_changed_event
+from octoprint_smart_pow.lib.event_manager_helpers import (
+    fire_power_state_changed_event,
+)
 
-from octoprint_smart_pow.lib.mappers.power_state import api_power_state_to_internal_repr
+from octoprint_smart_pow.lib.mappers.power_state import (
+    api_power_state_to_internal_repr,
+)
 from octoprint_smart_pow.lib.thread_utils import run_in_thread
 from octoprint_smart_pow.lib.tplink_plug_client import TPLinkPlug
 
@@ -15,6 +19,7 @@ class PowerStateWriter:
     """
     Read and write power state using events.
     """
+
     def __init__(
         self, plug: TPLinkPlug, event_manager: EventManager, logger=logging
     ):
@@ -50,15 +55,12 @@ class PowerStateWriter:
         fire_power_state_changed_event(self.event_manager, power_state)
         self.logger.info("Finished turning plug '%s'", power_state.name)
 
-
     # TODO Generalize to all smart plugs. Offload cloning to the sub-class
     def __clone_plug(self, tp_plug: TPLinkPlug):
         """
         Return a clone of a smart plug.
         """
-        cloned_tp_plug = TPLinkPlug(
-            host=tp_plug.plug.host, logger=self.logger
-        )
+        cloned_tp_plug = TPLinkPlug(host=tp_plug.plug.host, logger=self.logger)
         # Makes this class testable so the cloned plug
         # uses the same mocked backend, and doesn't actually connect to that host
         if isinstance(tp_plug.plug.protocol, FakeTransportProtocol):

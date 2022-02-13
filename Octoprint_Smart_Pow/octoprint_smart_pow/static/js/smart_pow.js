@@ -24,24 +24,24 @@ $(function() {
 
         // TODO: I've noticed a bug that on server startup, the web-UI
         // will keep showing 'Unknown' untill a power_state button is clicked
-        self.get_power_state = function() {
-            console.log("Querying API for power state")
+        self.get_state_from_server = function() {
             OctoPrint.simpleApiGet("smart_pow")
             .then(function (data) {
-                // make this data key a constant
-                power_state = data["power_state"]
-                self.power_state(power_state)
-                // If the server doesn't know the power_state yet,
+                // TODO make this data key a constant
+                self.power_state(data["power_state"])
+                self.is_conditional_power_off_enabled(data["automatic_power_off_enabled"])
+                // If the server doesn't know
                 // then let's ask it after a backoff
                 backoff = 1000
-                if(power_state == "Unknown") {
-                    setTimeout(self.get_power_state,backoff)
+                if(data["power_state"] == "Unknown") {
+                    setTimeout(self.get_state_from_server,backoff)
                 }
             }).fail(function (err) {
                 console.log(err)
             })
-
         }
+
+
 
         self.turn_on = function() {
             OctoPrint.simpleApiCommand("smart_pow","set_power_state",{
@@ -71,15 +71,15 @@ $(function() {
         // gets called _after_ the settings have been retrieved from the OctoPrint backend and thus
         // the SettingsViewModel been properly populated.
         self.onBeforeBinding = function() {
-            self.get_power_state()
+            self.get_state_from_server()
         }
 
         self.onEventplugin_smart_pow_power_state_changed_event = function(payload) {
             self.power_state(payload["power_state"])
         }
-        self.onEventplugin_smart_pow_conditional_power_off_enabled_event = function(payload) {
+        self.onEventplugin_smart_pow_conditional_power_off_changed_event = function(payload) {
             // TODO value-check the payload. It should be a boolean type
-            self.is_conditional_power_off_enabled(payload)
+            self.is_conditional_power_off_enabled(payload["automatic_power_off_enabled"])
         }
     }
 

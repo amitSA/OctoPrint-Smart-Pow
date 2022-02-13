@@ -2,3 +2,5 @@ octoprint
 .octoprint
 .vscode/
 *.log
+*.egg-info/
+dist/

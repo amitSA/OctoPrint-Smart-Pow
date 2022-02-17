@@ -12,7 +12,7 @@ plugin_package = "octoprint_smart_pow"
 plugin_name = "SmartPow"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.2.0"
+plugin_version = "0.0.0-rc.2"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
@@ -25,7 +25,7 @@ plugin_author = "Amit Saxena"
 plugin_author_email = "amitsax10@gmail.com"
 
 # The plugin's homepage URL. Can be overwritten within OctoPrint's internal data via __plugin_url__ in the plugin module
-plugin_url = "https://github.com/amitSA/Octoprint_Smart_Pow"
+plugin_url = "https://github.com/amitSA/OctoPrint-Smart-Pow"
 
 # The plugin's license. Can be overwritten within OctoPrint's internal data via __plugin_license__ in the plugin module
 plugin_license = "AGPLv3"

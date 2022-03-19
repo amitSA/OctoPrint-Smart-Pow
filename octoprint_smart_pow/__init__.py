@@ -11,11 +11,7 @@ from octoprint_smart_pow.lib.data.power_state import (
     PowerState,
 )
 from octoprint_smart_pow.lib.data.events import Events
-from octoprint_smart_pow.lib import events
-from octoprint_smart_pow.lib.event_manager_helpers import (
-    fire_automatic_power_off_do_change_event,
-    fire_power_state_changed_event,
-)
+# from octoprint_smart_pow.lib import events
 from octoprint_smart_pow.lib.features.automatic_power_off import (
     AutomaticPowerOff,
 )
@@ -32,9 +28,9 @@ from octoprint_smart_pow.lib.features.printer_shutdown_predicate import (
     printer_ready_to_shutdown,
 )
 from octoprint_smart_pow.lib.mappers.automatic_power_off import (
-    api_scheduled_power_off_state_to_internal_repr,
     scheduled_power_off_state_to_api_repr,
 )
+from octoprint_smart_pow.lib.mappers.events import fire_event
 
 from octoprint_smart_pow.lib.mappers.power_state import (
     power_state_to_api_repr,
@@ -167,18 +163,26 @@ class SmartPowPlugin(
         """
         Defining POST route
         """
-        import flask  # TODO DO I NEED THIS ?
+        # Wait for dependencies to be defined by startup
+        # XXX hacky
+        while self.event_manager is None:
+            time.sleep(1)
 
-        # TODO What happens if an exception happens ? Do I need to setup a flask error response
         if command == POWER_STATE_DO_CHANGE_API_COMMAND:
-            self.event_manager.fire(
-                Events.POWER_STATE_DO_CHANGE_EVENT(), payload=data
+            fire_event(
+                self.event_manager,
+                Events.POWER_STATE_DO_CHANGE_EVENT(),
+                serialized_data=data
             )
         elif command == AUTOMATIC_POWER_OFF_API_COMMAND:
-            fire_automatic_power_off_do_change_event(
-                api_scheduled_power_off_state_to_internal_repr(data)
+            fire_event(
+                self.event_manager,
+                Events.AUTOMATIC_POWER_OFF_DO_CHANGE_EVENT(),
+                serialized_data=data
             )
         else:
+            # TODO What happens if an exception happens ?
+            # Do I need to setup a flask error response, or is that automatic ?
             raise ValueError(f"command {command} is unrecognized")
 
     def on_api_get(self, request):

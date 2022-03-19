@@ -12,14 +12,10 @@ from octoprint_smart_pow.lib.data.automatic_power_off import (
 )
 from octoprint_smart_pow.lib.data.events import Events
 from octoprint_smart_pow.lib.data.power_state import PowerState
-from octoprint_smart_pow.lib.event_manager_helpers import (
-    fire_automatic_power_off_do_change_event,
-    fire_automatic_power_off_changed_event,
-    fire_power_state_do_change_event,
-)
 from octoprint_smart_pow.lib.mappers.automatic_power_off import (
     api_scheduled_power_off_state_to_internal_repr,
 )
+from octoprint_smart_pow.lib.mappers.events import fire_event
 
 
 class AutomaticPowerOff:
@@ -121,31 +117,42 @@ class AutomaticPowerOff:
         """
         if event == self.TIMEOUT_EVENT:
             if self.state.scheduled and self.printer_ready_to_shutdown():
-                fire_power_state_do_change_event(
-                    self.event_manager, power_state=PowerState.OFF
+                fire_event(
+                    self.event_manager,
+                    event=Events.POWER_STATE_DO_CHANGE_EVENT(),
+                    app_data=PowerState.OFF
                 )
                 # After shuttdown power, disable the scheduling automation
                 #   or else the system will fight the user the next time they
                 #   turn it on!
-                fire_automatic_power_off_do_change_event(
-                    self.event_manager, ScheduledPowerOffState(scheduled=False)
+                fire_event(
+                    self.event_manager,
+                    event=Events.AUTOMATIC_POWER_OFF_DO_CHANGE_EVENT(),
+                    app_data=ScheduledPowerOffState(scheduled=False)
                 )
         elif event == octoprint.events.Events.PRINT_STARTED:
-            fire_automatic_power_off_do_change_event(
-                self.event_manager, ScheduledPowerOffState(scheduled=False)
+            fire_event(
+                self.event_manager,
+                event=Events.AUTOMATIC_POWER_OFF_DO_CHANGE_EVENT(),
+                app_data=ScheduledPowerOffState(scheduled=False)
             )
         elif event in [octoprint.events.Events.PRINT_DONE]:
-            fire_automatic_power_off_do_change_event(
-                self.event_manager, ScheduledPowerOffState(scheduled=True)
+            fire_event(
+                self.event_manager,
+                event=Events.AUTOMATIC_POWER_OFF_DO_CHANGE_EVENT(),
+                app_data=ScheduledPowerOffState(scheduled=True)
             )
+
         elif event == Events.AUTOMATIC_POWER_OFF_DO_CHANGE_EVENT():
             desired_state = api_scheduled_power_off_state_to_internal_repr(
                 payload
             )
             if self.state.scheduled != desired_state.scheduled:
                 self.state = desired_state
-                fire_automatic_power_off_changed_event(
-                    self.event_manager, self.state
+                fire_event(
+                    self.event_manager,
+                    event=Events.AUTOMATIC_POWER_OFF_CHANGED_EVENT(),
+                    app_data=self.state
                 )
 
     def __subscribe(self, events, callback):

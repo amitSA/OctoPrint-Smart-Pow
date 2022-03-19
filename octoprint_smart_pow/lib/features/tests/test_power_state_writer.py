@@ -50,7 +50,7 @@ class TestPowerStateWriter:
             payload=api_power_state_off,
         )
         # wait for state change event for "off" to come
-        wait_for_event(
+        await wait_for_event(
             event=Events.POWER_STATE_CHANGED_EVENT(),
             expected_payload=api_power_state_off,
         )
@@ -62,7 +62,7 @@ class TestPowerStateWriter:
             payload=api_power_state_on,
         )
         # wait for state change event for "on" to come
-        wait_for_event(
+        await wait_for_event(
             event=Events.POWER_STATE_CHANGED_EVENT(),
             expected_payload=api_power_state_on,
         )

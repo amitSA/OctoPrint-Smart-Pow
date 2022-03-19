@@ -10,9 +10,6 @@ from octoprint_smart_pow.lib.data.automatic_power_off import (
 )
 from octoprint_smart_pow.lib.data.events import Events
 from octoprint_smart_pow.lib.data.power_state import PowerState
-from octoprint_smart_pow.lib.event_manager_helpers import (
-    fire_automatic_power_off_do_change_event,
-)
 from octoprint_smart_pow.lib.features.automatic_power_off import (
     AutomaticPowerOff,
 )

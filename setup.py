@@ -12,7 +12,7 @@ plugin_package = "octoprint_smart_pow"
 plugin_name = "SmartPow"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.0.0-rc.2"
+plugin_version = "0.0.0-rc.4"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
@@ -31,13 +31,13 @@ plugin_url = "https://github.com/amitSA/OctoPrint-Smart-Pow"
 plugin_license = "AGPLv3"
 
 # Any additional requirements besides OctoPrint should be listed here
-plugin_requires = ["python-kasa", "funcy"]
+plugin_requires = ["python-kasa", "funcy", "voluptuous"]
 
 # TODO "voluptuous" is a development dependency for python-kasa, we need it since we
 # use python-kasa internals that aren't in the regular dependency list.
 # (Is this correct?)
 extras_require = {
- 'dev': ["pytest-mock", "pytest", "voluptuous", "pytest-asyncio", "black", "pylint"]
+ 'dev': ["pytest-mock", "pytest", "pytest-asyncio", "black", "pylint"]
 }
 
 ### --------------------------------------------------------------------------------------------------------------------

@@ -4,10 +4,7 @@ from octoprint.events import EventManager
 from octoprint_smart_pow.lib.data.events import Events
 from octoprint_smart_pow.lib.data.power_state import PowerState
 import logging
-from octoprint_smart_pow.lib.event_manager_helpers import (
-    fire_power_state_changed_event,
-)
-
+from octoprint_smart_pow.lib.mappers.events import fire_event
 from octoprint_smart_pow.lib.mappers.power_state import (
     api_power_state_to_internal_repr,
 )
@@ -52,7 +49,11 @@ class PowerStateWriter:
             asyncio.run(asyncio.wait_for(plug.turn_off(), TIMEOUT_SECS))
         else:
             raise ValueError(f"power_state {power_state} unrecognized")
-        fire_power_state_changed_event(self.event_manager, power_state)
+        fire_event(
+            self.event_manager,
+            event=Events.POWER_STATE_CHANGED_EVENT(),
+            app_data=power_state
+        )
         self.logger.info("Finished turning plug '%s'", power_state.name)
 
     # TODO Generalize to all smart plugs. Offload cloning to the sub-class

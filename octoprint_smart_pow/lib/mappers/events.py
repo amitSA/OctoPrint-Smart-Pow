@@ -1,19 +1,27 @@
-# def qualify_event_name(event, plugin_name=None):
-#     """
-#     When we register custom events with Octoprint, Octoprint actually
-#     transforms the names to namespace them from other events
+from octoprint_smart_pow.lib.data.events import Events
+from octoprint_smart_pow.lib.data.power_state import PowerState
+from octoprint_smart_pow.lib.mappers.automatic_power_off import api_scheduled_power_off_state_to_internal_repr, scheduled_power_off_state_to_api_repr
+from octoprint_smart_pow.lib.mappers.power_state import api_power_state_to_internal_repr, power_state_to_api_repr
+from octoprint.events import EventManager
 
-#     See this documentation on the transformation
-#     https://docs.octoprint.org/en/master/plugins/hooks.html#octoprint-events-register-custom-events
-#     """
-#     return __quality_event_name(
-#         event=event,
-#         plugin_name=(plugin_name if not None else __parse_plugin_name())
-#     )
+def fire_event(event_manager: EventManager, event, app_data=None, serialized_data=None):
+    serializer = {
+        Events.POWER_STATE_CHANGED_EVENT(): power_state_to_api_repr,
+        Events.POWER_STATE_DO_CHANGE_EVENT(): power_state_to_api_repr,
+        Events.AUTOMATIC_POWER_OFF_DO_CHANGE_EVENT(): scheduled_power_off_state_to_api_repr,
+        Events.AUTOMATIC_POWER_OFF_CHANGED_EVENT(): scheduled_power_off_state_to_api_repr
+    }[event]
+    if serialized_data is None:
+        event_manager.fire(event,payload=serializer(app_data))
+    else:
+        event_manager.fire(event,payload=serialized_data)
 
 
-# def __quality_event_name(event,plugin_name):
-#     return f"plugin_{plugin_name}_{event}"
-
-# def __parse_plugin_name():
-#     pass
+def parse_event_payload(source_event, serialized_data):
+    deserializer = {
+        Events.POWER_STATE_CHANGED_EVENT(): api_power_state_to_internal_repr,
+        Events.POWER_STATE_DO_CHANGE_EVENT(): api_power_state_to_internal_repr,
+        Events.AUTOMATIC_POWER_OFF_DO_CHANGE_EVENT():  api_scheduled_power_off_state_to_internal_repr,
+        Events.AUTOMATIC_POWER_OFF_CHANGED_EVENT(): api_scheduled_power_off_state_to_internal_repr,
+    }[source_event]
+    return deserializer(serialized_data)

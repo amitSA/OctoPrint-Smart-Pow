@@ -2,9 +2,8 @@ import asyncio
 import time
 from datetime import timedelta
 from octoprint.events import EventManager
-from octoprint_smart_pow.lib.event_manager_helpers import (
-    fire_power_state_changed_event,
-)
+from octoprint_smart_pow.lib.data.events import Events
+from octoprint_smart_pow.lib.mappers.events import fire_event
 from octoprint_smart_pow.lib.smart_plug_client import SmartPlugClient
 from octoprint_smart_pow.lib.data.power_state import (
     PowerState,
@@ -96,5 +95,9 @@ class PowerStatePublisher:
                 self.last_updated_state,
                 current_state,
             )
-            fire_power_state_changed_event(self.event_manager, current_state)
+            fire_event(
+                self.event_manager,
+                event=Events.POWER_STATE_CHANGED_EVENT(),
+                app_data=current_state
+            )
             self.last_updated_state = current_state

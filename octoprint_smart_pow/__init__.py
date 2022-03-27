@@ -64,14 +64,11 @@ class SmartPowPlugin(
     # do this in a separate thread
     def on_after_startup(self):
         self._logger.info("Starting up Smart Pow Plugin")
-        self._logger.info(
-            "Discovering TP-Link smart plug device in the home network"
-        )
         # TODO Octoprint docs say to not perform long-running or blocking operations in this hook,
         # yet this method can take up to 15 seconds to resolve.
         # reference: https://docs.octoprint.org/en/master/plugins/mixins.html#octoprint.plugin.StartupPlugin.on_after_startup
         self.tp_smart_plug = discoverer.find_tp_link_plug(
-            alias=self.__smart_plug_alias_setting(), logger=self._logger
+            alias=self._get_setting("tp_link_smart_plug_alias"), logger=self._logger
         )
         self.event_manager: EventManager = self._event_bus
         self.power_publisher = PowerStatePublisher(
@@ -94,13 +91,7 @@ class SmartPowPlugin(
         )
         self.automatic_power_off.enable()  # TODO: Instead of being hard-coded, we want it controlled by the UI
 
-    def get_settings_defaults(self):
-        """
-        Defines settings keys and their default values.
-        """
-        return {
-            "tp_link_smart_plug_alias": "3d printer power plug",
-        }
+
 
     # def get_template_vars(self):
     #     """
@@ -132,11 +123,21 @@ class SmartPowPlugin(
         return [
             # "type" is the primary key, since by default each type uniquely maps to a specifically named template file
             {"type": "tab", "custom_bindings": True},
+            # {"type": "settings","custom_bindings": False}
         ]
 
-    def __smart_plug_alias_setting(self):
-        """Return the alias of the tp-link smart_plug to connect to"""
-        return self._settings.get(["tp_link_smart_plug_alias"])
+    def _get_setting(self,*keys):
+        """Return setting values"""
+        return self._settings.get(list(keys))
+
+    def get_settings_defaults(self):
+        """
+        Defines settings keys and their default values.
+        """
+        return {
+            "tp_link_smart_plug_alias": "3d printer power plug",
+            "url": "mackymicmacman"
+        }
 
     def on_shutdown(self):
         self.power_publisher.stop()

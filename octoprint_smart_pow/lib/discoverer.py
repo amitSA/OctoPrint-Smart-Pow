@@ -16,6 +16,7 @@ class NoDevicesFoundError(Exception):
 
 @retry(tries=3, errors=NoDevicesFoundError, timeout=5)
 def find_tp_link_plug(alias, logger=logging) -> TPLinkPlug:
+    logger.info("Attempting to discover tp-link device '%s'",alias)
     devices = asyncio.run(Discover.discover())
     # XXX can prob use funcy method to select an object from a list that contains a specific property
     def matches_alias(device):

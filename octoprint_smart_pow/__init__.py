@@ -67,39 +67,80 @@ class SmartPowPlugin(
         # TODO Octoprint docs say to not perform long-running or blocking operations in this hook,
         # yet this method can take up to 15 seconds to resolve.
         # reference: https://docs.octoprint.org/en/master/plugins/mixins.html#octoprint.plugin.StartupPlugin.on_after_startup
-        self.tp_smart_plug = discoverer.find_tp_link_plug(
-            alias=self._get_setting("tp_link_smart_plug_alias"), logger=self._logger
-        )
-        self.event_manager: EventManager = self._event_bus
-        self.power_publisher = PowerStatePublisher(
-            event_manager=self.event_manager,
-            smart_plug=self.tp_smart_plug,
-            logger=self._logger,
-        )
-        self.power_publisher.start()
+        # DEBUG
 
-        # initialize power controller
-        self.power_state_writer = PowerStateWriter(
-            plug=self.tp_smart_plug,
-            event_manager=self.event_manager,
-            logger=self._logger,
-        )
+        self.event_manager: EventManager = self._event_bus
+        self.power_state_writer = None
+        self.power_publisher = None
+        tp_link_alias = self.get_setting("tp_link_smart_plug_alias")
+
+        if tp_link_alias is not None:
+            self.reset_power_state_publisher_and_writer(tp_link_alias)
 
         self.automatic_power_off = AutomaticPowerOff(
             self.event_manager,
             funcy.partial(printer_ready_to_shutdown, self._printer),
         )
         self.automatic_power_off.enable()  # TODO: Instead of being hard-coded, we want it controlled by the UI
+        self._logger.info("Initialized Smart Pow plugin")
 
+    def on_settings_save(self, data):
+        tp_link_alias = data["tp_link_smart_plug_alias"]
+        if self.get_setting("tp_link_smart_plug_alias") != tp_link_alias :
+            self.reset_power_state_publisher_and_writer(tp_link_alias)
 
+        octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
-    # def get_template_vars(self):
-    #     """
-    #     Injecting static values into templates
+    # Needs to be run in it's own thread b/c when this is called by
+    # Octoprint it's running in an event loop, but not called as an async
+    # Since this function's dependencies need to run co-routines, they need
+    # to be a in a thread that hasn't started an event loop yet
+    @run_in_thread(wait=False)
+    def reset_power_state_publisher_and_writer(self, tp_link_alias):
+        tp_smart_plug = None
+        try:
+            tp_smart_plug = discoverer.find_tp_link_plug(
+                    alias=tp_link_alias, logger=self._logger
+                )
+        except discoverer.NoDevicesFoundError:
+            self._logger.error("No matched devices were found.")
+        else:
+            self.reset_power_state_writer(tp_smart_plug)
+            self.reset_power_publisher(tp_smart_plug)
 
-    #     Implemented by TemplatePlugin
-    #     """
-    #     return dict(power_plug_state=self._settings.get(["power_plug_state"]))
+    def reset_power_state_writer(self, tp_smart_plug):
+        if self.power_state_writer is not None and self.power_state_writer.started():
+            self.power_state_writer.disable()
+
+        self.power_state_writer = PowerStateWriter(
+            plug=tp_smart_plug,
+            event_manager=self.event_manager,
+            logger=self._logger,
+        )
+        self.power_state_writer.enable()
+
+    # TODO: Rename to power_state_publisher to be consistent with
+    # power_state_writer
+    def reset_power_publisher(self, tp_smart_plug):
+        if self.power_publisher is not None and self.power_publisher.running():
+            self.power_publisher.stop()
+
+        self.power_publisher = PowerStatePublisher(
+            event_manager=self.event_manager,
+            smart_plug=tp_smart_plug,
+            logger=self._logger,
+        )
+        self.power_publisher.start()
+
+    def get_template_vars(self):
+        """
+        Injecting static values into templates
+
+        Implemented by TemplatePlugin
+        """
+        return {
+            "url": self.get_setting("url")
+        }
 
     def register_custom_events(self):
         custom_events = [
@@ -123,10 +164,11 @@ class SmartPowPlugin(
         return [
             # "type" is the primary key, since by default each type uniquely maps to a specifically named template file
             {"type": "tab", "custom_bindings": True},
-            # {"type": "settings","custom_bindings": False}
+            {"type": "navbar","custom_bindings": False},
+            {"type": "settings","custom_bindings": False},
         ]
 
-    def _get_setting(self,*keys):
+    def get_setting(self,*keys):
         """Return setting values"""
         return self._settings.get(list(keys))
 
@@ -136,7 +178,10 @@ class SmartPowPlugin(
         """
         return {
             "tp_link_smart_plug_alias": "3d printer power plug",
-            "url": "mackymicmacman"
+            # "tp_link_smart_plug_alias": None,
+            "automatic_shutdown": False,
+            "automatic_shutdown_temp_threshold": "30",
+            "url": "https://en.wikipedia.org/wiki/Forrest_Gump"
         }
 
     def on_shutdown(self):

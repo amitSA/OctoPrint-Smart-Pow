@@ -13,7 +13,6 @@ class NoDevicesFoundError(Exception):
 
     pass
 
-
 @retry(tries=3, errors=NoDevicesFoundError, timeout=5)
 def find_tp_link_plug(alias, logger=logging) -> TPLinkPlug:
     logger.info("Attempting to discover tp-link device '%s'",alias)

@@ -14,16 +14,14 @@ from octoprint_smart_pow.lib.tplink_plug_client import TPLinkPlug
 
 class PowerStateWriter:
     """
-    Read and write power state using events.
+    Change the power state using events.
     """
 
     def __init__(
         self, plug: TPLinkPlug, event_manager: EventManager, logger=logging
     ):
         self.event_manager = event_manager
-        self.event_manager.subscribe(
-            Events.POWER_STATE_DO_CHANGE_EVENT(), self.change_power_state
-        )
+
         self.plug = plug
         self.logger = logger
         self.current_state: PowerState = PowerState.UNKNOWN
@@ -35,9 +33,19 @@ class PowerStateWriter:
         desired_state: PowerState = api_power_state_to_internal_repr(payload)
         self.__set_power_state_of_external_device(desired_state)
 
+    def enable(self):
+        self.event_manager.subscribe(
+            Events.POWER_STATE_DO_CHANGE_EVENT(), self.change_power_state
+        )
+
+    def disable(self):
+        self.event_manager.unsubscribe(
+            Events.POWER_STATE_DO_CHANGE_EVENT(), self.change_power_state
+        )
+
     # TODO maybe to better indicate in the calling thread, re-raise exceptions
     # from the worker thread ?
-    @run_in_thread
+    @run_in_thread()
     def __set_power_state_of_external_device(self, power_state: PowerState):
         # Clone the plug in order to use this on a new asyncio thread
         plug = self.__clone_plug(self.plug)

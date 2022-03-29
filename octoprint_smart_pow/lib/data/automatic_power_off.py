@@ -10,3 +10,6 @@ AUTOMATIC_POWER_OFF_SCHEDULED_API_KEY = (
 @dataclass
 class ScheduledPowerOffState:
     scheduled: bool
+
+
+UnscheduledPowerOff = ScheduledPowerOffState(scheduled=False)

@@ -6,6 +6,7 @@ import octoprint.plugin
 from octoprint_smart_pow.lib.data.automatic_power_off import (
     AUTOMATIC_POWER_OFF_SCHEDULED_API_KEY,
     AUTOMATIC_POWER_OFF_API_COMMAND,
+    UnscheduledPowerOff,
 )
 from octoprint_smart_pow.lib.data.power_state import (
     PowerState,
@@ -56,22 +57,12 @@ class SmartPowPlugin(
     octoprint.plugin.EventHandlerPlugin,
     octoprint.plugin.SimpleApiPlugin,
 ):
-    def __init__(self):
-        self.power_publisher = None
-
-    # TODO: documentation for this hook says not to put long running tasks here
-    # discoverer.find_tp_link_plug is a long running operation, I should probably
-    # do this in a separate thread
     def on_after_startup(self):
         self._logger.info("Starting up Smart Pow Plugin")
-        # TODO Octoprint docs say to not perform long-running or blocking operations in this hook,
-        # yet this method can take up to 15 seconds to resolve.
-        # reference: https://docs.octoprint.org/en/master/plugins/mixins.html#octoprint.plugin.StartupPlugin.on_after_startup
-        # DEBUG
-
         self.event_manager: EventManager = self._event_bus
         self.power_state_writer = None
         self.power_publisher = None
+        self.automatic_power_off = None
         tp_link_alias = self.get_setting("tp_link_smart_plug_alias")
 
         if tp_link_alias is not None:
@@ -87,6 +78,10 @@ class SmartPowPlugin(
     def on_settings_save(self, data):
         tp_link_alias = data["tp_link_smart_plug_alias"]
         if self.get_setting("tp_link_smart_plug_alias") != tp_link_alias :
+            # This method might take up to 30 seconds to complete, thus blocking
+            # how long clicking "Save" in the UI will take.
+            # We should give the user a heads up in the UI of that fact AND in the event
+            # connecting fails, we should throw a popup in the UI
             self.reset_power_state_publisher_and_writer(tp_link_alias)
 
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
@@ -95,7 +90,7 @@ class SmartPowPlugin(
     # Octoprint it's running in an event loop, but not called as an async
     # Since this function's dependencies need to run co-routines, they need
     # to be a in a thread that hasn't started an event loop yet
-    @run_in_thread(wait=False)
+    @run_in_thread(wait=True)
     def reset_power_state_publisher_and_writer(self, tp_link_alias):
         tp_smart_plug = None
         try:
@@ -238,16 +233,13 @@ class SmartPowPlugin(
         Return all relevant data structures since there can only be one GET
         implemented by the SimpleAPIPlugin
         """
-        # Wait for dependencies to be defined by startup
-        # XXX hacky
-        while self.power_publisher is None:
-            time.sleep(1)
-
         api_power_state: APIPowerState = power_state_to_api_repr(
-            self.power_publisher.get_state()
+            self.power_publisher.get_state() if self.power_publisher is not None
+            else PowerState.UNKNOWN
         )
         automatic_power_off = scheduled_power_off_state_to_api_repr(
-            self.automatic_power_off.get_state()
+            self.automatic_power_off.get_state() if self.automatic_power_off is not None
+            else UnscheduledPowerOff
         )
         return flask.jsonify({**api_power_state, **automatic_power_off})
 

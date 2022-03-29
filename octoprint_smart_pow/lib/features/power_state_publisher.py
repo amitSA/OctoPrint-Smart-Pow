@@ -10,8 +10,8 @@ from octoprint_smart_pow.lib.data.power_state import (
 )
 import logging
 import kasa
-from octoprint_smart_pow.lib.async_interval_scheduler import (
-    AsyncIntervalScheduler,
+from octoprint_smart_pow.lib.interval_scheduler import (
+    IntervalScheduler,
 )
 
 
@@ -34,7 +34,7 @@ class PowerStatePublisher:
         self.smart_plug = smart_plug
 
         # An object that will call a routine on an interval
-        self.interval_scheduler = AsyncIntervalScheduler(
+        self.interval_scheduler = IntervalScheduler(
             routine=self.__publish_if_changed,
             interval=self.POLL_INTERVAL_FOR_READ,
         )

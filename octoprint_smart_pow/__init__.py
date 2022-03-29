@@ -61,7 +61,7 @@ class SmartPowPlugin(
         self._logger.info("Starting up Smart Pow Plugin")
         self.event_manager: EventManager = self._event_bus
         self.power_state_writer = None
-        self.power_publisher = None
+        self.power_state_publisher = None
         self.automatic_power_off = None
         tp_link_alias = self.get_setting("tp_link_smart_plug_alias")
 
@@ -117,15 +117,15 @@ class SmartPowPlugin(
     # TODO: Rename to power_state_publisher to be consistent with
     # power_state_writer
     def reset_power_publisher(self, tp_smart_plug):
-        if self.power_publisher is not None and self.power_publisher.running():
-            self.power_publisher.stop()
+        if self.power_state_publisher is not None and self.power_state_publisher.running():
+            self.power_state_publisher.stop()
 
-        self.power_publisher = PowerStatePublisher(
+        self.power_state_publisher = PowerStatePublisher(
             event_manager=self.event_manager,
             smart_plug=tp_smart_plug,
             logger=self._logger,
         )
-        self.power_publisher.start()
+        self.power_state_publisher.start()
 
     def get_template_vars(self):
         """
@@ -180,7 +180,7 @@ class SmartPowPlugin(
         }
 
     def on_shutdown(self):
-        self.power_publisher.stop()
+        self.power_state_publisher.stop()
 
     def get_assets(self):
         """
@@ -234,7 +234,7 @@ class SmartPowPlugin(
         implemented by the SimpleAPIPlugin
         """
         api_power_state: APIPowerState = power_state_to_api_repr(
-            self.power_publisher.get_state() if self.power_publisher is not None
+            self.power_state_publisher.get_state() if self.power_state_publisher is not None
             else PowerState.UNKNOWN
         )
         automatic_power_off = scheduled_power_off_state_to_api_repr(

@@ -4,8 +4,8 @@ from typing import Callable
 import octoprint.printer
 import octoprint.events
 from octoprint.events import EventManager
-from octoprint_smart_pow.lib.async_interval_scheduler import (
-    AsyncIntervalScheduler,
+from octoprint_smart_pow.lib.interval_scheduler import (
+    IntervalScheduler,
 )
 from octoprint_smart_pow.lib.data.automatic_power_off import (
     ScheduledPowerOffState,
@@ -75,7 +75,7 @@ class AutomaticPowerOff:
             )
 
         if self.timer is None or self.timer.has_finished():
-            self.timer = AsyncIntervalScheduler(
+            self.timer = IntervalScheduler(
                 post_timeout_events, timedelta(seconds=5)
             )
         else:

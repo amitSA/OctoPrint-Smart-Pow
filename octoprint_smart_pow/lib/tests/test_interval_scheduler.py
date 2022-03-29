@@ -1,13 +1,13 @@
 import pytest
 from datetime import timedelta
 
-from octoprint_smart_pow.lib.async_interval_scheduler import (
-    AsyncIntervalScheduler,
+from octoprint_smart_pow.lib.interval_scheduler import (
+    IntervalScheduler,
 )
 from octoprint_smart_pow.lib.wait_utils import wait_untill
 
 
-class TestAsyncIntervalScheduler:
+class TestIntervalScheduler:
     @pytest.mark.asyncio
     async def test_running_routine(self, mocker):
         EXPECTED_ROUTINE_CALLS = 3
@@ -16,7 +16,7 @@ class TestAsyncIntervalScheduler:
 
         def routine():
             # We can control how many times this is supposed to be called by the
-            # AsyncIntervalScheduler by passing the scheduler via closure,
+            # IntervalScheduler by passing the scheduler via closure,
             # and stopping scheduling after the desired number of calls
             if closure["calls"] == EXPECTED_ROUTINE_CALLS:
                 # Based from how the scheduler works, after calling stop()
@@ -27,7 +27,7 @@ class TestAsyncIntervalScheduler:
         # TODO: Once migrated to python3.8, we can also test async routines with mocker.AsyncMock
         mocked_routine = mocker.Mock(wraps=routine)
 
-        scheduler = AsyncIntervalScheduler(
+        scheduler = IntervalScheduler(
             routine=mocked_routine, interval=timedelta(seconds=0)
         )
         closure["scheduler"] = scheduler

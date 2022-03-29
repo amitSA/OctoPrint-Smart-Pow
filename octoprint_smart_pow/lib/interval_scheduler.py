@@ -10,7 +10,7 @@ import logging
 import asyncio
 
 
-class AsyncIntervalScheduler:
+class IntervalScheduler:
     """
     Runs a routine at an interval out of the calling thread
     """
@@ -61,7 +61,7 @@ class AsyncIntervalScheduler:
 # I used this as a manual test since it was quicker than writing unit-tests. HarHarHar
 if __name__ == "__main__":
     squak = lambda: print("Caaw!")
-    scheduler = AsyncIntervalScheduler(
+    scheduler = IntervalScheduler(
         routine=squak, interval=timedelta(seconds=1)
     )
     scheduler.start()

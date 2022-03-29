@@ -1,10 +1,11 @@
 import unittest
 import funcy
+from funcy import last
 from octoprint_smart_pow.lib.features.power_state_writer import PowerStateWriter
 import pytest
 import octoprint
 from octoprint.events import EventManager
-from octoprint_smart_pow.lib.wait_utils import wait_untill
+from octoprint_smart_pow.lib import wait_utils
 from octoprint_smart_pow.lib.data.events import Events
 from octoprint_smart_pow.lib.data.power_state import PowerState
 from octoprint_smart_pow.lib.tplink_plug_client import TPLinkPlug
@@ -20,7 +21,7 @@ class TestPowerStateWriter:
         )
 
     @pytest.mark.asyncio
-    async def test_read_and_write_power_state(
+    async def test_write_power_state(
         self,
         power_state_writer,
         event_manager: EventManager,
@@ -29,6 +30,7 @@ class TestPowerStateWriter:
         api_power_state_on,
         mocker,
     ):
+        power_state_writer.enable()
         # register a mocker to listen to events so we can
         # make assertions on how the mocker was called
         event_listener = mocker.Mock()
@@ -37,8 +39,9 @@ class TestPowerStateWriter:
         )
         # partially construct an assertion function for
         # receiving the confirmation event
-        wait_for_event = funcy.partial(
-            self.wait_for_event, listener=event_listener, mocker=mocker
+        wait_untill_event = funcy.partial(
+            wait_utils.wait_untill_event,
+            event_manager=event_manager,
         )
 
         # set initial state
@@ -50,9 +53,9 @@ class TestPowerStateWriter:
             payload=api_power_state_off,
         )
         # wait for state change event for "off" to come
-        await wait_for_event(
+        await wait_untill_event(
             event=Events.POWER_STATE_CHANGED_EVENT(),
-            expected_payload=api_power_state_off,
+            payload=api_power_state_off,
         )
         assert await tplink_plug_client.read() == PowerState.OFF
 
@@ -62,27 +65,23 @@ class TestPowerStateWriter:
             payload=api_power_state_on,
         )
         # wait for state change event for "on" to come
-        await wait_for_event(
+        await wait_untill_event(
             event=Events.POWER_STATE_CHANGED_EVENT(),
-            expected_payload=api_power_state_on,
+            payload=api_power_state_on,
         )
         assert await tplink_plug_client.read() == PowerState.ON
 
-    # TODO what is this test testing ?
-    @pytest.mark.asyncio
-    async def wait_for_event(
-        self,
-        event: octoprint.events.Events,
-        expected_payload,
-        listener: unittest.mock.Mock,
-        mocker,
-    ):
-        def event_received_with_payload():
-            return (
-                mocker.call(event, expected_payload) in listener.call_args_list
-            )
+        # Test out that the writer does not change external plugs
+        # when disabled
+        power_state_writer.disable()
 
-        await wait_untill(
-            condition=event_received_with_payload,
-            condition_name=f"event {event} received with expected payload",
+        # turn off power
+        event_manager.fire(
+            event=Events.POWER_STATE_DO_CHANGE_EVENT(),
+            payload=api_power_state_off,
         )
+        with pytest.raises(TimeoutError):
+            await wait_untill_event(
+                event=Events.POWER_STATE_CHANGED_EVENT(),
+                payload=api_power_state_off,
+            )

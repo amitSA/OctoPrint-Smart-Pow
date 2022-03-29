@@ -1,0 +1,26 @@
+<form class="form-horizontal">
+
+    <h4>Smart Plug Settings</h4>
+    <div class="control-group">
+        <label class="control-label" for="tp_link_alias">TP_Link Plug Alias </label>
+        <div class="controls">
+            <input type="text" id="tp_link_alias" data-bind="value: settings.plugins.smart_pow.tp_link_smart_plug_alias"/>
+        </div>
+    </div>
+
+    <h4>Power Automation</h4>
+    <div class="control-group">
+        <label class="control-label" for="auto_shutdown_enabled">Automatically shutdown after print</label>
+        <div class="controls">
+            <input type="checkbox" id="auto_shutdown_enabled" data-bind="checked: settings.plugins.smart_pow.automatic_shutdown"/>
+        </div>
+
+    </div>
+
+    <div class="control-group">
+        <label class="control-label" for="auto_shutdown_temp_thresholds">Turn off after temperature falls below</label>
+        <div class="controls">
+            <input type="text" class="span2" id="auto_shutdown_temp_thresholds" data-bind="value: settings.plugins.smart_pow.automatic_shutdown_temp_threshold"/>
+        </div>
+    </div>
+</form>

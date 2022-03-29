@@ -55,6 +55,12 @@ class PowerStatePublisher:
         """
         self.interval_scheduler.stop()
 
+    def running(self):
+        """
+        Returns whether the publisher is running or not
+        """
+        return self.interval_scheduler.running()
+
     async def __read_current_state(
         self,
         retry_attempts=MAX_CONNECTION_FAILED_RETRY_ATTEMPTS,

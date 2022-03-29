@@ -57,7 +57,7 @@ class PowerStatePublisher:
 
     def running(self):
         """
-        Returns whether is running or not
+        Returns whether the publisher is running or not
         """
         return self.interval_scheduler.running()
 
